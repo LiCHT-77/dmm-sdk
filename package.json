@@ -1,6 +1,6 @@
 {
   "name": "@licht-77/dmm-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DMM Affiliate API v3 SDK for Node.js/TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR_USERNAME/dmm-sdk.git"
+    "url": "git+https://github.com/LiCHT-77/dmm-sdk"
   },
   "keywords": [
     "dmm",
@@ -28,9 +28,9 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/dmm-sdk/issues"
+    "url": "https://github.com/LiCHT-77/dmm-sdk/issues"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/dmm-sdk#readme",
+  "homepage": "https://github.com/LiCHT-77/dmm-sdk#readme",
   "type": "module",
   "devDependencies": {
     "@types/jest": "^29.5.14",
