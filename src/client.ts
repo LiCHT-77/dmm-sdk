@@ -1,11 +1,20 @@
 import { URL, URLSearchParams } from 'url';
-import { ItemListRequestParams, ItemListResponse, Item } from './types/itemlist';
-import { FloorListResponse } from './types/floorlist';
-import { ActressSearchRequestParams, ActressSearchResponse } from './types/actresssearch';
-import { GenreSearchRequestParams, GenreSearchResponse } from './types/genresearch';
-import { MakerSearchRequestParams, MakerSearchResponse } from './types/makersearch';
-import { SeriesSearchRequestParams, SeriesSearchResponse } from './types/seriessearch';
-import { AuthorSearchRequestParams, AuthorSearchResponse } from './types/authorsearch';
+import {
+  ItemListRequestParams,
+  ItemListResponse,
+  Item,
+  FloorListResponse,
+  ActressSearchRequestParams,
+  ActressSearchResponse,
+  GenreSearchRequestParams,
+  GenreSearchResponse,
+  MakerSearchRequestParams,
+  MakerSearchResponse,
+  SeriesSearchRequestParams,
+  SeriesSearchResponse,
+  AuthorSearchRequestParams,
+  AuthorSearchResponse,
+} from './types';
 
 /**
  * DMM APIクライアントのオプション
