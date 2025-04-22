@@ -1,6 +1,6 @@
 import { DmmApiHelperClient } from './helperClient';
 import { DmmApiClient } from './client';
-import { Item, ItemListRequestParams, ItemListResponse } from './types';
+import { Item, ItemListResponse } from './types';
 
 // DmmApiClientをモック化
 jest.mock('./client');
@@ -33,7 +33,7 @@ describe('DmmApiHelperClient', () => {
   });
 
   it('should return the raw DmmApiClient instance', () => {
-    expect(enhancedClient.getRawClient()).toBe(mockRawClient);
+    expect(enhancedClient.api()).toBe(mockRawClient);
   });
 
   describe('getItemById', () => {
@@ -118,14 +118,12 @@ describe('DmmApiHelperClient', () => {
       expect(item).toBeNull();
     });
 
-    it('should return null if getItemList throws an error', async () => {
+    it('should throw an error if getItemList throws an error', async () => {
       const testError = new Error('API Error');
       mockRawClient.getItemList.mockRejectedValue(testError);
-      // console.error の出力を抑制 (テスト中のエラーログを防ぐ)
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-
-      const item = await enhancedClient.getItemById(testCid);
+      // getItemById が testError をスローすることを期待する
+      await expect(enhancedClient.getItemById(testCid)).rejects.toThrow(testError);
 
       expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
       expect(mockRawClient.getItemList).toHaveBeenCalledWith({
@@ -133,63 +131,6 @@ describe('DmmApiHelperClient', () => {
         hits: 1,
         offset: 1,
       });
-      expect(item).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(`Error fetching item with cid ${testCid}:`, testError);
-
-      // スパイを元に戻す
-      consoleErrorSpy.mockRestore();
     });
   });
-
-  // 他の委譲されたメソッドのテストも同様に追加可能 (必要に応じて)
-  // 例: getItemList
-  describe('getItemList (delegated)', () => {
-    it('should call the raw client getItemList', async () => {
-      const params: ItemListRequestParams = { keyword: 'test' };
-      const mockResponse: ItemListResponse = { /* モックレスポンス */ } as any;
-      mockRawClient.getItemList.mockResolvedValue(mockResponse);
-
-      const result = await enhancedClient.getItemList(params);
-
-      expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
-      expect(mockRawClient.getItemList).toHaveBeenCalledWith(params);
-      expect(result).toBe(mockResponse);
-    });
-  });
-
-  // 例: getAllItems
-  describe('getAllItems (delegated)', () => {
-    it('should call the raw client getAllItems and yield items', async () => {
-        const params = { keyword: 'test' };
-        const mockItem1: Item = { content_id: 'item1' } as Item;
-        const mockItem2: Item = { content_id: 'item2' } as Item;
-
-        // モックジェネレータ関数
-        async function* mockGenerator(): AsyncGenerator<Item, void, undefined> {
-            yield mockItem1;
-            yield mockItem2;
-        }
-
-        // DmmApiClient.prototype.getAllItems がモックジェネレータを返すように設定
-        // jest.spyOn を使ってプロトタイプメソッドをモックする
-        const getAllItemsSpy = jest.spyOn(DmmApiClient.prototype, 'getAllItems')
-                                   .mockImplementation(mockGenerator);
-
-        // DmmApiHelperClient を再生成して、モックされたプロトタイプメソッドを持つ DmmApiClient を内部で使うようにする
-        enhancedClient = new DmmApiHelperClient(mockOptions);
-
-        const results: Item[] = [];
-        for await (const item of enhancedClient.getAllItems(params)) {
-            results.push(item);
-        }
-
-        expect(getAllItemsSpy).toHaveBeenCalledTimes(1);
-        expect(getAllItemsSpy).toHaveBeenCalledWith(params);
-        expect(results).toEqual([mockItem1, mockItem2]);
-
-        // スパイを元に戻す
-        getAllItemsSpy.mockRestore();
-    });
-});
-
 });
