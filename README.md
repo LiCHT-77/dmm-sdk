@@ -9,9 +9,9 @@ DMM Affiliate API v3 を TypeScript/JavaScript から簡単に利用するため
 npm または yarn を使用してインストールします。
 
 ```bash
-npm install @LiCHT-77/dmm-sdk
+npm install @licht-77/dmm-sdk
 # または
-yarn add @LiCHT-77/dmm-sdk
+yarn add @licht-77/dmm-sdk
 ```
 
 ## 使い方
@@ -21,7 +21,7 @@ yarn add @LiCHT-77/dmm-sdk
 API ID とアフィリエイト ID を指定してクライアントを初期化します。これらは DMM アフィリエイトの管理画面から取得できます。
 
 ```typescript
-import { DmmApiClient } from '@LiCHT-77/dmm-sdk';
+import { DmmApiClient } from '@licht-77/dmm-sdk';
 
 const client = new DmmApiClient({
   apiId: 'YOUR_API_ID',         // あなたのAPI IDに置き換えてください
@@ -107,7 +107,7 @@ searchActresses();
 各APIのリクエストパラメータとレスポンスの型定義も提供されています。TypeScriptプロジェクトで型チェックの恩恵を受けることができます。
 
 ```typescript
-import { ItemListRequestParams, ItemListResponse, Item } from '@LiCHT-77/dmm-sdk';
+import { ItemListRequestParams, ItemListResponse, Item } from '@licht-77/dmm-sdk';
 ```
 
 ## ライセンス
