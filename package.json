@@ -1,0 +1,41 @@
+{
+  "name": "dmm-sdk",
+  "version": "1.0.0",
+  "description": "DMM Affiliate API v3 SDK for Node.js/TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/dmm-sdk.git"
+  },
+  "keywords": [
+    "dmm",
+    "affiliate",
+    "api",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/dmm-sdk/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/dmm-sdk#readme",
+  "type": "module",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.14.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.2",
+    "typescript": "^5.8.3"
+  }
+}
