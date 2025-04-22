@@ -10,8 +10,6 @@ npm または yarn を使用してインストールします。
 
 ```bash
 npm install @licht-77/dmm-sdk
-# または
-yarn add @licht-77/dmm-sdk
 ```
 
 ## 使い方
