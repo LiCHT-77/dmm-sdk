@@ -1,5 +1,5 @@
 {
-  "name": "dmm-sdk",
+  "name": "@licht-77/dmm-sdk",
   "version": "1.0.0",
   "description": "DMM Affiliate API v3 SDK for Node.js/TypeScript",
   "main": "dist/index.js",
@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">=18.0.0"
