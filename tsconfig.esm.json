@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json", // tsconfig.json を継承
+  "compilerOptions": {
+    "module": "ESNext",        // モジュール形式をESMに
+    "outDir": "./dist/esm",     // 出力先を dist/esm に
+    "declaration": true,       // 型定義ファイルは生成しない
+    "declarationMap": true    // 型定義のソースマップも生成しない
+  }
+}

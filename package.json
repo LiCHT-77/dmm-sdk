@@ -1,15 +1,28 @@
 {
   "name": "@licht-77/dmm-sdk",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "DMM Affiliate API v3 SDK for Node.js/TypeScript",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig.esm.json",
     "prepare": "npm run build"
   },
   "engines": {
@@ -31,7 +44,6 @@
     "url": "https://github.com/LiCHT-77/dmm-sdk/issues"
   },
   "homepage": "https://github.com/LiCHT-77/dmm-sdk#readme",
-  "type": "module",
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
