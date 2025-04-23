@@ -1,6 +1,6 @@
 {
   "name": "@licht-77/dmm-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "DMM Affiliate API v3 SDK for Node.js/TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
