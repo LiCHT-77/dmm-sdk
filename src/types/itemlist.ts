@@ -74,6 +74,8 @@ export interface Item {
   floor_code: string;
   /** フロア名 */
   floor_name: string;
+  /** カテゴリ名 */
+  category_name: string;
   /** 商品ID */
   content_id: string;
   /** 品番 */
@@ -82,6 +84,8 @@ export interface Item {
   title: string;
   /** ボリューム */
   volume?: string;
+  /** 巻数 */
+  number?: string;
   /** レビュー情報 */
   review?: {
     /** 件数 */
@@ -93,8 +97,6 @@ export interface Item {
   URL: string;
   /** アフィリエイトURL */
   affiliateURL: string;
-  /** スマホ向けアフィリエイトURL */
-  affiliateURLsp?: string;
   /** 画像URL */
   imageURL?: {
     /** リスト */
@@ -103,6 +105,13 @@ export interface Item {
     small: string;
     /** 大 */
     large: string;
+  };
+  /** 立ち読み情報 */
+  tachiyomi?: {
+    /** 立ち読みページURL */
+    URL: string;
+    /** 立ち読みアフィリエイトリンクURL */
+    affiliateURL: string;
   };
   /** サンプル画像URL */
   sampleImageURL?: {
@@ -153,18 +162,46 @@ export interface Item {
     /** メーカー情報 */
     maker?: { id: number; name: string }[];
     /** 出演者情報 */
-    actress?: { id: number; name: string; ruby: string }[];
+    actor?: { id: number; name: string }[];
+    /** 女優情報 */
+    actress?: { id: number; name: string }[];
     /** 監督情報 */
-    director?: { id: number; name: string; ruby: string }[];
+    director?: { id: number; name: string }[];
     /** 作者情報 */
-    author?: { id: number; name: string; ruby: string }[];
+    author?: { id: number; name: string }[];
     /** レーベル情報 */
     label?: { id: number; name: string }[];
+    /** タイプ情報 */
+    type?: { id: number; name: string }[];
+    /** カラー情報 */
+    color?: { id: number; name: string }[];
+    /** サイズ情報 */
+    size?: { id: number; name: string }[];
   };
+  /** CD情報 */
+  cdinfo?: {
+    /** アルバム、シングルなど */
+    kind: string;
+  };
+  /** JANコード */
+  jancode?: string;
+  /** メーカー品番 */
+  maker_product?: string;
+  /** ISBN */
+  isbn?: string;
   /** 在庫状況 */
   stock?: string;
-  // 他にもサービス固有のフィールドが存在する可能性あり
-  [key: string]: any;
+  /** パンくずリスト */
+  directory?: { id: number; name: string }[];
+  /** キャンペーン情報 */
+  campaign?: {
+    /** キャンペーン開始日時 */
+    date_begin: string;
+    /** キャンペーン終了日時 */
+    date_end: string;
+    /** キャンペーンタイトル */
+    title: string;
+  };
 }
 
 /**

@@ -1,11 +1,14 @@
 // src/client.test.ts
-import { DmmApiClient, DmmApiClientOptions } from './client';
-import { ItemListRequestParams, Item } from './types/itemlist';
-import { ActressSearchRequestParams } from './types/actresssearch';
-import { GenreSearchRequestParams } from './types/genresearch';
-import { MakerSearchRequestParams } from './types/makersearch';
-import { SeriesSearchRequestParams } from './types/seriessearch';
-import { AuthorSearchRequestParams } from './types/authorsearch';
+import { DmmApiClient, type DmmApiClientOptions } from './client';
+import type {
+  ItemListRequestParams,
+  Item,
+  ActressSearchRequestParams,
+  GenreSearchRequestParams,
+  MakerSearchRequestParams,
+  SeriesSearchRequestParams,
+  AuthorSearchRequestParams,
+} from './types';
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -47,14 +50,14 @@ describe('DmmApiClient', () => {
   it('should create an instance with default site', () => {
     const defaultClient = new DmmApiClient(defaultOptions);
     expect(defaultClient).toBeInstanceOf(DmmApiClient);
-    expect((defaultClient as any).site).toBe('DMM.com');
+    expect((defaultClient as unknown as { site: string }).site).toBe('DMM.com');
   });
 
   it('should create an instance with default timeout and retries', () => {
      const defaultClient = new DmmApiClient(defaultOptions);
-    expect((defaultClient as any).timeout).toBe(clientDefaultTimeout);
-    expect((defaultClient as any).maxRetries).toBe(clientDefaultMaxRetries);
-    expect((defaultClient as any).retryDelay).toBe(clientDefaultRetryDelay);
+    expect((defaultClient as unknown as { timeout: number }).timeout).toBe(clientDefaultTimeout);
+    expect((defaultClient as unknown as { maxRetries: number }).maxRetries).toBe(clientDefaultMaxRetries);
+    expect((defaultClient as unknown as { retryDelay: number }).retryDelay).toBe(clientDefaultRetryDelay);
   });
 
   describe('request method (including timeout and retry logic)', () => {
@@ -69,7 +72,7 @@ describe('DmmApiClient', () => {
         json: async () => mockResponse,
       });
 
-      await (client as any).request(endpoint, params);
+      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
 
       const expectedUrl = new URL(`${expectedBaseUrl}${endpoint}`);
       const searchParams = new URLSearchParams({
@@ -92,7 +95,7 @@ describe('DmmApiClient', () => {
             json: async () => ({ result: mockResult }),
         });
 
-        const result = await (client as any).request(endpoint, params);
+        const result = await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
         expect(result).toEqual(mockResult);
     });
 
@@ -106,7 +109,7 @@ describe('DmmApiClient', () => {
         json: async () => errorResponse,
       });
 
-      await expect((client as any).request(endpoint, params))
+      await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
         .rejects
         .toThrow(`API request to ${endpoint} failed with status ${errorStatus} after 0 attempts: ${errorResponse.result.message}`);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -124,32 +127,38 @@ describe('DmmApiClient', () => {
         });
 
         try {
-            await (client as any).request(endpoint, params);
+            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
             throw new Error('Promise should have been rejected');
-        } catch (error: any) {
+        } catch (error: unknown) {
             const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorText}`;
-            expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+            if (error instanceof Error) {
+                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+            } else {
+                throw new Error('Caught error is not an instance of Error');
+            }
         }
 
         const expectedCalls = 1 + testMaxRetries;
         expect(mockFetch).toHaveBeenCalledTimes(expectedCalls);
-    }, testRetryDelay * (Math.pow(2, testMaxRetries + 1) -1) + 1000);
+    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
 
     it('should retry on network error', async () => {
       const networkError = new TypeError('Failed to fetch');
       mockFetch.mockRejectedValue(networkError);
 
        try {
-           await (client as any).request(endpoint, params);
+           await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
            throw new Error('Promise should have been rejected');
-       } catch (error: any) {
+       } catch (error: unknown) {
            expect(error).toBeInstanceOf(Error);
-           expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${networkError.message}`);
+           if (error instanceof Error) {
+            expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${networkError.message}`);
+           }
        }
 
       const expectedNetworkErrorCalls = 1 + testMaxRetries;
       expect(mockFetch).toHaveBeenCalledTimes(expectedNetworkErrorCalls);
-    }, testRetryDelay * (Math.pow(2, testMaxRetries + 1) -1) + 1000);
+    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
 
      it('should retry on 429 Too Many Requests', async () => {
         const errorStatus = 429;
@@ -162,15 +171,19 @@ describe('DmmApiClient', () => {
         });
 
         try {
-            await (client as any).request(endpoint, params);
+            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
             throw new Error('Promise should have been rejected');
-        } catch (error: any) {
+        } catch (error: unknown) {
              const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorResponse.result.message}`;
-             expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+             if (error instanceof Error) {
+                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+             } else {
+                throw new Error('Caught error is not an instance of Error');
+             }
         }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
-    }, testRetryDelay * (Math.pow(2, testMaxRetries + 1) -1) + 1000);
+    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
 
      it('should retry on 5xx Server Error', async () => {
         const errorStatus = 503;
@@ -183,15 +196,19 @@ describe('DmmApiClient', () => {
         });
 
         try {
-            await (client as any).request(endpoint, params);
+            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
             throw new Error('Promise should have been rejected');
-        } catch (error: any) {
+        } catch (error: unknown) {
             const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorResponse.result.message}`;
-            expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+            if (error instanceof Error) {
+                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
+            } else {
+                throw new Error('Caught error is not an instance of Error');
+            }
         }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
-    }, testRetryDelay * (Math.pow(2, testMaxRetries + 1) -1) + 1000);
+    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
 
      it('should timeout if fetch takes too long', async () => {
         mockFetch.mockImplementation(async (_url, options) => {
@@ -209,7 +226,7 @@ describe('DmmApiClient', () => {
             return { ok: true, json: async () => ({ result: { success: true } }) };
         });
 
-        await expect((client as any).request(endpoint, params))
+        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
             .rejects
             .toThrow(`API request to ${endpoint} timed out after ${testTimeout}ms`);
         expect(mockFetch).toHaveBeenCalledTimes(1); // タイムアウトなのでリトライしない
@@ -223,7 +240,7 @@ describe('DmmApiClient', () => {
             }), testTimeout - 50)) // クライアントタイムアウト未満
         );
 
-        await expect((client as any).request(endpoint, params)).resolves.toEqual(mockResult);
+        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)).resolves.toEqual(mockResult);
         expect(mockFetch).toHaveBeenCalledTimes(1);
     }, testTimeout + 1000);
 
@@ -235,7 +252,7 @@ describe('DmmApiClient', () => {
             json: async () => invalidResponse,
         });
 
-        await expect((client as any).request(endpoint, params))
+        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
             .rejects
             .toThrow('Invalid API response format: "result" field is missing.');
         expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -248,15 +265,15 @@ describe('DmmApiClient', () => {
     const params: ItemListRequestParams = { service: 'digital', floor: 'videoa', hits: 10, keyword: 'test' };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.getItemList(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/ItemList`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ItemList`);
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        service: params.service!,
-        floor: params.floor!,
-        hits: String(params.hits!),
-        keyword: params.keyword!,
+        service: params.service || '',
+        floor: params.floor || '',
+        hits: String(params.hits || ''),
+        keyword: params.keyword || '',
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
@@ -267,14 +284,14 @@ describe('DmmApiClient', () => {
     const params: ItemListRequestParams = { site: 'FANZA', service: 'digital', floor: 'videoa', hits: 10 };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.getItemList(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/ItemList`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ItemList`);
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'FANZA',
-        service: params.service!,
-        floor: params.floor!,
-        hits: String(params.hits!),
+        service: params.service || '',
+        floor: params.floor || '',
+        hits: String(params.hits || ''),
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
@@ -284,7 +301,7 @@ describe('DmmApiClient', () => {
   it('getFloorList should call request with correct parameters', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.getFloorList();
-    const expectedUrl = new URL(`${(client as any).baseUrl}/FloorList`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/FloorList`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
@@ -299,13 +316,13 @@ describe('DmmApiClient', () => {
     const params: ActressSearchRequestParams = { initial: 'あ', hits: 5 };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.searchActress(params);
-     const expectedUrl = new URL(`${(client as any).baseUrl}/ActressSearch`);
+     const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ActressSearch`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        initial: params.initial!,
-        hits: String(params.hits!),
+        initial: params.initial || '',
+        hits: String(params.hits || ''),
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
@@ -316,13 +333,13 @@ describe('DmmApiClient', () => {
     const params: GenreSearchRequestParams = { floor_id: '123', initial: 'か' };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.searchGenre(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/GenreSearch`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/GenreSearch`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        floor_id: params.floor_id!,
-        initial: params.initial!,
+        floor_id: params.floor_id || '',
+        initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -332,13 +349,13 @@ describe('DmmApiClient', () => {
     const params: MakerSearchRequestParams = { floor_id: '456', initial: 'さ' };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.searchMaker(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/MakerSearch`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/MakerSearch`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        floor_id: params.floor_id!,
-        initial: params.initial!,
+        floor_id: params.floor_id || '',
+        initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -348,13 +365,13 @@ describe('DmmApiClient', () => {
     const params: SeriesSearchRequestParams = { floor_id: '789', initial: 'た' };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.searchSeries(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/SeriesSearch`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/SeriesSearch`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        floor_id: params.floor_id!,
-        initial: params.initial!,
+        floor_id: params.floor_id || '',
+        initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -364,13 +381,13 @@ describe('DmmApiClient', () => {
     const params: AuthorSearchRequestParams = { floor_id: '101', initial: 'な' };
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
     await client.searchAuthor(params);
-    const expectedUrl = new URL(`${(client as any).baseUrl}/AuthorSearch`);
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/AuthorSearch`);
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        floor_id: params.floor_id!,
-        initial: params.initial!,
+        floor_id: params.floor_id || '',
+        initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -440,14 +457,14 @@ describe('DmmApiClient', () => {
       expect(receivedItems[249].content_id).toBe('item_250');
       expect(mockFetch).toHaveBeenCalledTimes(3);
 
-      const expectedUrlBase = `${(client as any).baseUrl}/ItemList`;
+      const expectedUrlBase = `${(client as unknown as { baseUrl: string }).baseUrl}/ItemList`;
       const baseSearchParams = {
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
         site: 'DMM.com',
-        service: params.service!,
-        floor: params.floor!,
-        keyword: params.keyword!,
+        service: params.service || '',
+        floor: params.floor || '',
+        keyword: params.keyword || '',
         hits: String(hitsPerPage),
       };
 
@@ -535,15 +552,14 @@ describe('DmmApiClient', () => {
                         },
                     }),
                 };
-            } else {
-                // 2回目以降の呼び出しはネットワークエラー
-                throw apiError;
             }
+            // 2回目以降の呼び出しはネットワークエラー
+            throw apiError;
         });
 
         const generator = client.getAllItems(params);
         const receivedItems: Partial<Item>[] = [];
-        let caughtError: any = null;
+        let caughtError: Error | null = null;
 
         try {
             for await (const item of generator) {
@@ -551,7 +567,7 @@ describe('DmmApiClient', () => {
             }
              throw new Error('Error should have been thrown during iteration');
         } catch (error) {
-            caughtError = error;
+            caughtError = error as Error;
         }
 
         expect(receivedItems.length).toBe(hitsPerPage);
@@ -560,12 +576,15 @@ describe('DmmApiClient', () => {
 
         const expectedOffsetForError = 1 + hitsPerPage;
         const expectedOriginalErrorMessage = `Error during API request to /ItemList after ${testMaxRetries} attempts: ${apiError.message}`;
-        expect(caughtError.message).toBe(`Error in getAllItems at offset ${expectedOffsetForError}: ${expectedOriginalErrorMessage}`);
-
-        expect(caughtError.cause).toBeInstanceOf(Error);
-        expect(caughtError.cause.message).toBe(expectedOriginalErrorMessage);
+        if (caughtError) {
+            expect(caughtError.message).toBe(`Error in getAllItems at offset ${expectedOffsetForError}: ${expectedOriginalErrorMessage}`);
+            expect(caughtError.cause).toBeInstanceOf(Error);
+            if (caughtError.cause instanceof Error) {
+                expect(caughtError.cause.message).toBe(expectedOriginalErrorMessage);
+            }
+        }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + (1 + testMaxRetries));
-    }, testRetryDelay * (Math.pow(2, testMaxRetries + 1) -1) + 1000);
+    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
   });
 });

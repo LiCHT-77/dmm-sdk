@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="ja">
+<body class="d-body-mg0">
+<div id="page">
+    <div id="content">
+        <div class="contents_top"><img src="https://p.dmm.co.jp/p/affiliate/web_service/contents_top.gif" width="730" height="4" alt=""></div>
+        <div id="api-page">
+            <div id="api-content">
+                <div class="api-area">
+                    <h2 class="api-capt01"><img src="https://p.dmm.co.jp/p/affiliate/web_service/reference/gene_capt_item.gif" width="550" height="29" alt="リファレンス<DMM.com 商品情報検索APIver3>"></h2>
+                    <!--/api-capt01-->
+                    <p class="tx14">DMM.com の商品の情報を取得することが可能なAPI です。</p>
+                <!--/api-area--></div>
+                <div class="api-area">
+                    <!--/api-capt02-->
+                    <p class="tx14 api-capt04"><img src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10" height="13" alt=""><span class="bold">リクエストURL</span></p>
+                    <div class="request_url">https://api.dmm.com/affiliate/v3/ItemList?api_id=[APIID]&amp;affiliate_id=[アフィリエイトID]&amp;site=FANZA&amp;service=digital&amp;floor=videoa&amp;hits=10&amp;sort=date&amp;keyword=%e4%b8%8a%e5%8e%9f%e4%ba%9c%e8%a1%a3&amp;output=json</div>
+                    <div style="color: red;">※APIID・アフィリエイトIDを入力する際には、前後の[ ]は不要です。</div>
+                    <div style="display: flex;align-items: center;"><a href="https://support.dmm.com/affiliate/article/48587" target="_blank">DMM TVおよびプレミアムについて</a><img src="/img/api/icon_open.svg" style="margin-left: 2px;"/></div>
+                    <p class="tx14 api-capt04"><img src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10" height="13" alt="" class="mg-r6"><span class="bold">リクエストパラメータ</span></p>
+                    <table border="0" cellpadding="0" cellspacing="0" class="parameter-table">
+                        <tr>
+                            <th class="w95 hl" scope="col">論理名 </th>
+                            <th class="w95 hl" scope="col">物理名</th>
+                            <th class="w20 hl" scope="col">必須</th>
+                            <th class="w95 hl" scope="col">値のサンプル</th>
+                            <th class="w200 hl" scope="col">概要</th>
+                        </tr>
+                        <tr>
+                            <td scope="row"> APIID </td>
+                            <td> api_id </td>
+                            <td class="api_circle"> ○ </td>
+                            <td></td>
+                            <td> 登録時に割り振られたID </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> アフィリエイトID </td>
+                            <td> affiliate_id </td>
+                            <td class="api_circle"> ○ </td>
+                            <td> affiliate-990 </td>
+                            <td> 登録時に割り振られた990～999までのアフィリエイトID </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> サイト </td>
+                            <td> site </td>
+                            <td class="api_circle"> ○ </td>
+                            <td> FANZA </td>
+                            <td> 一般（DMM.com）かアダルト（FANZA）か </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> サービス </td>
+                            <td> service </td>
+                            <td class="api_circle"></td>
+                            <td> digital </td>
+                            <td><a href="/api/v3/floorlist.html">フロアAPI</a>から取得できるサービスコードを指定</td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> フロア </td>
+                            <td> floor </td>
+                            <td class="api_circle"></td>
+                            <td> videoa </td>
+                            <td><a href="/api/v3/floorlist.html">フロアAPI</a>から取得できるフロアコードを指定</td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 取得件数 </td>
+                            <td> hits </td>
+                            <td class="api_circle"></td>
+                            <td> 20 </td>
+                            <td> 初期値：20　最大：100 </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 検索開始位置 </td>
+                            <td> offset </td>
+                            <td class="api_circle"></td>
+                            <td> 1 </td>
+                            <td> 初期値：1　最大：50000 </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> ソート順 </td>
+                            <td> sort </td>
+                            <td class="api_circle"></td>
+                            <td> rank </td>
+                            <td>初期値：rank<br>
+                                人気：rank<br>
+                                価格が高い順：price<br>
+                                価格が安い順：-price<br>
+                                発売日：date<br>
+                                評価：review <br>
+                                マッチング順：match </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> キーワード </td>
+                            <td> keyword </td>
+                            <td class="api_circle"></td>
+                            <td> 上原亜衣 </td>
+                            <td>
+                                UTF-8で指定<br>
+                                <a href="https://support.dmm.com/others/article/12107" target="_blank">キーワード検索のヒント</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 商品ID </td>
+                            <td> cid </td>
+                            <td class="api_circle"></td>
+                            <td> 15dss00145 </td>
+                            <td> 商品に振られているcontent_id</td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 絞りこみ項目 </td>
+                            <td> article </td>
+                            <td class="api_circle"></td>
+                            <td> actress </td>
+                            <td><a href="/api/v3/actresssearch.html">女優</a>：actress<br>
+                                <a href="/api/v3/authorsearch.html">作者</a>：author<br>
+                                <a href="/api/v3/genresearch.html">ジャンル</a>：genre<br>
+                                <a href="/api/v3/seriessearch.html">シリーズ</a>：series<br>
+                                <a href="/api/v3/makersearch.html">メーカー</a>：maker<br>
+                                絞り込み項目を複数設定する場合、パラメータ名を配列化します。<br>
+                                例：&article[0]=genre&article[1]=actress
+                            </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 絞り込みID </td>
+                            <td> article_id </td>
+                            <td class="api_circle"></td>
+                            <td> 1011199 </td>
+                            <td> 上記絞り込み項目のID(各検索APIから取得可能)<br>
+                                絞り込み項目を複数設定する場合、パラメータ名を配列化します。<br>
+                                例：&article_id[0]=111111&article_id[1]=222222
+                            </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 発売日絞り込み </td>
+                            <td> gte_date </td>
+                            <td class="api_circle"></td>
+                            <td> 2016-04-01T00:00:00 </td>
+                            <td> このパラメータで指定した日付以降に発売された商品を絞り込むことができます。<br>
+                                <a href="https://www.w3.org/TR/NOTE-datetime" target="_blank">ISO8601</a>形式でフォーマットした日付を指定してください。(ただし、タイムゾーンは指定できません) </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 発売日絞り込み </td>
+                            <td> lte_date </td>
+                            <td class="api_circle"></td>
+                            <td> 2016-04-30T23:59:59 </td>
+                            <td> このパラメータで指定した日付以前に発売された商品を絞り込むことができます。<br>
+                                フォーマットはgte_dateと同じです。 </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 在庫絞り込み </td>
+                            <td> mono_stock </td>
+                            <td class="api_circle"></td>
+                            <td> mono </td>
+                            <td>初期値：絞り込みなし<br>
+                                在庫あり：stock<br>
+                                予約商品（在庫あり）：reserve<br>
+                                予約商品（キャンセル待ち）：reserve_empty<br>
+                                DMM通販のみ：mono<br>
+                                マーケットプレイスのみ：dmp<br>
+                                ※通販サービスのみ指定可能</td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> 出力形式 </td>
+                            <td> output </td>
+                            <td class="api_circle"></td>
+                            <td> json </td>
+                            <td> json / xml </td>
+                        </tr>
+                        <tr>
+                            <td scope="row"> コールバック </td>
+                            <td> callback </td>
+                            <td class="api_circle"></td>
+                            <td> callback </td>
+                            <td>出力形式jsonで指定した場合に、このパラメータでコールバック関数名を指定すると、JSONP形式で出力されます</td>
+                        </tr>
+                    </table>
+                <!--/api-area--></div>
+                <div class="api-area">
+                    <!--/api-capt02-->
+                    <p class="tx14 api-capt04"><img src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10" height="13" alt="" class="mg-r6"><span class="bold">レスポンスフィールド</span></p>
+                    <table border="0" cellpadding="0" cellspacing="0" class="parameter-table">
+                        <tr>
+                            <th class="w160 hl" scope="col">フィールド</th>
+                            <th class="w125 hl" scope="col">説明</th>
+                            <th class="hl" scope="col">例</th>
+                        </tr>
+<tr><td scope="row">  request </td><td>   </td><td>   </td></tr>
+<tr><td scope="row">  parameters  </td><td>   </td><td>   </td></tr>
+<tr><td scope="row">  └ parameter </td><td> リクエストパラメータ  </td><td>   </td></tr>
+<tr><td scope="row">  　　├ name  </td><td> パラメータ名  </td><td> site  </td></tr>
+<tr><td scope="row">  　　└ value </td><td> 値 </td><td> FANZA </td></tr>
+<tr><td scope="row">  result  </td><td>   </td><td>   </td></tr>
+<tr><td scope="row">  ├ status  </td><td> ステータスコード  </td><td> 200 </td></tr>
+<tr><td scope="row">  ├ result_count  </td><td> 取得件数  </td><td> 20  </td></tr>
+<tr><td scope="row">  ├ total_count </td><td> 全体件数  </td><td> 50000  </td></tr>
+<tr><td scope="row">  ├ first_position  </td><td> 検索開始位置  </td><td> 1 </td></tr>
+<tr><td scope="row">  ├ items </td><td> 商品情報  </td><td>   </td></tr>
+<tr><td scope="row">  　├ service_code  </td><td> サービスコード </td><td> digital  </td></tr>
+<tr><td scope="row">  　├ service_name  </td><td> サービス名 </td><td> 動画  </td></tr>
+<tr><td scope="row">  　├ floor_code  </td><td> フロアコード  </td><td> videoa </td></tr>
+<tr><td scope="row">  　├ floor_name  </td><td> フロア名  </td><td> ビデオ </td></tr>
+<tr><td scope="row">  　├ category_name </td><td> カテゴリ名 </td><td> ビデオ (動画)  </td></tr>
+<tr><td scope="row">  　├ content_id  </td><td> 商品ID  </td><td> 15dss00145  </td></tr>
+<tr><td scope="row">  　├ product_id  </td><td> 品番  </td><td> 15dss00145dl  </td></tr>
+<tr><td scope="row">  　├ title </td><td> タイトル  </td><td> GET！！ 素人ナンパ Best100！！ 街角女子ベスト100人 8時間 </td></tr>
+<tr><td scope="row">  　├ volume  </td><td> 収録時間 or ページ数 </td><td> 350 </td></tr>
+<tr><td scope="row">  　├ number  </td><td> 巻数  </td><td> 3 </td></tr>
+<tr><td scope="row">  　├ review  </td><td> レビュー平均点 </td><td>   </td></tr>
+<tr><td scope="row">  　　├ count  </td><td> レビュー数 </td><td> 8 </td></tr>
+<tr><td scope="row">  　　└ average  </td><td> レビュー平均点 </td><td> 3.13  </td></tr>
+<tr><td scope="row">  　├ URL </td><td> 商品ページURL  </td><td> http://www.dmm.co.jp/digital/videoa/-/detail/=/cid=15dss00145/  </td></tr>
+<tr><td scope="row">  　├ affiliateURL  </td><td> アフィリエイトリンクURL </td><td> https://al.dmm.co.jp/?lurl=http%3A%2F%2Fwww.dmm.co.jp%2Fdigital%2Fvideoa%2F-%2Fdetail%2F%3D%2Fcid%3D15dss00145%2F&amp;af_id=affiliate-990&amp;ch=api </td></tr>
+<tr><td scope="row">  　├ imageURL  </td><td> 画像URL </td><td>   </td></tr>
+<tr><td scope="row">  　　├ list </td><td> リストページ用 </td><td> http://pics.dmm.co.jp/digital/video/15dss00145/15dss00145pt.jpg </td></tr>
+<tr><td scope="row">  　　├ small  </td><td> 末端用（小）  </td><td> http://pics.dmm.co.jp/digital/video/15dss00145/15dss00145ps.jpg </td></tr>
+<tr><td scope="row">  　　└ large  </td><td> 末端用（大）  </td><td> http://pics.dmm.co.jp/digital/video/15dss00145/15dss00145pl.jpg </td></tr>
+<tr><td scope="row">  　├ tachiyomi </td><td></td><td>    </td></tr>
+<tr><td scope="row">  　　├ URL  </td><td> 立ち読みページURL  </td><td>http://book.dmm.co.jp/tachiyomi/?product_id=b468acown00017&amp;item_id=b468acown00017&amp;shop=digital_book  </td></tr>
+<tr><td scope="row">  　　└ affilaiteURL </td><td> 立ち読みアフィリエイトリンクURL </td><td> https://al.dmm.co.jp/?lurl=http%3A%2F%2Fbook.dmm.co.jp%2Ftachiyomi%2F%3Fproduct_id%3Db468acown00017%26item_id%3Db468acown00017%26shop%3Ddigital_book&amp;af_id=affiliate-990&amp;ch=api </td></tr>
+<tr><td scope="row">  　├ sampleImageURL  </td><td> サンプル画像URL </td><td>   </td></tr>
+<tr><td scope="row">  　　├ sample_s </td><td> サンプル（小）リスト  </td><td>   </td></tr>
+<tr><td scope="row">  　　　 └ image  </td><td> サンプル画像（小） </td><td> http://pics.dmm.co.jp/digital/video/15dss00145/15dss00145-1.jpg </td></tr>
+<tr><td scope="row">  　　├ sample_l </td><td> サンプル（大）リスト  </td><td>   </td></tr>
+<tr><td scope="row">  　　　 └ image  </td><td> サンプル画像（大） </td><td> http://pics.dmm.co.jp/digital/video/15dss00145/15dss00145jp-1.jpg </td></tr>
+<tr><td scope="row">  　├ sampleMovieURL  </td><td> サンプル動画URL </td><td>   </td></tr>
+<tr><td scope="row">  　　├ size_476_306 </td><td> 476×306 </td><td> http://www.dmm.co.jp/litevideo/-/part/=/cid=15dss145/size=476_306/affi_id=affiliate-990/  </td></tr>
+<tr><td scope="row">  　　├ size_560_360 </td><td> 560×360 </td><td> http://www.dmm.co.jp/litevideo/-/part/=/cid=15dss145/size=560_360/affi_id=affiliate-990/  </td></tr>
+<tr><td scope="row">  　　├ size_644_414 </td><td> 644×414 </td><td> http://www.dmm.co.jp/litevideo/-/part/=/cid=15dss145/size=644_414/affi_id=affiliate-990/  </td></tr>
+<tr><td scope="row">  　　├ size_720_480 </td><td> 720×480 </td><td> http://www.dmm.co.jp/litevideo/-/part/=/cid=15dss145/size=720_480/affi_id=affiliate-990/  </td></tr>
+<tr><td scope="row">  　　├ pc_flag  </td><td> PC対応しているか </td><td> 1 </td></tr>
+<tr><td scope="row">  　　└ sp_flag  </td><td> スマホ対応しているか  </td><td> 1 </td></tr>
+<tr><td scope="row">  　├ prices  </td><td> 価格  </td><td>   </td></tr>
+<tr><td scope="row">  　　├ price  </td><td> 金額  </td><td> 300～  </td></tr>
+<tr><td scope="row">  　　├ list_price </td><td> 定価  </td><td>   </td></tr>
+<tr><td scope="row">  　　└ deliveries </td><td> 配信リスト </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ delivery  </td><td> 配信  </td><td>   </td></tr>
+<tr><td scope="row">  　　　　├ type </td><td> 配信タイプ </td><td> stream  </td></tr>
+<tr><td scope="row">  　　　　└ price  </td><td> 配信価格  </td><td> 300 </td></tr>
+<tr><td scope="row">  　├ date  </td><td> 発売日、配信開始日、貸出開始日 </td><td> 2012/8/3 10:00  </td></tr>
+<tr><td scope="row">  　├ iteminfo  </td><td> 商品詳細  </td><td>   </td></tr>
+<tr><td scope="row">  　　├ genre  </td><td> ジャンル  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> ジャンル名 </td><td> ベスト・総集編 </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> ジャンルID  </td><td> 6003  </td></tr>
+<tr><td scope="row">  　　├ series </td><td> シリーズ  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> シリーズ名 </td><td> GETシリーズ </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> シリーズID  </td><td> 1006  </td></tr>
+<tr><td scope="row">  　　├ maker  </td><td> メーカー  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> メーカー名 </td><td> 桃太郎映像出版 </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> メーカーID  </td><td> 40016 </td></tr>
+<tr><td scope="row">  　　├ actor  </td><td> 出演者（一般作品のみ）  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> 出演者名 </td><td>  </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> 出演者ID  </td><td>  </td></tr>
+<tr><td scope="row">  　　├ actress  </td><td> 女優（アダルト作品のみ）  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> 女優名 </td><td> 小澤マリア </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> 女優ID  </td><td> 15187 </td></tr>
+<tr><td scope="row">  　　├ director </td><td> 監督  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> 監督名 </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> 監督ID  </td><td>   </td></tr>
+<tr><td scope="row">  　　├ author </td><td> 作家、原作者、著者 </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> 作家、原作者、著者名  </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> 作家、原作者、著者ID </td><td>   </td></tr>
+<tr><td scope="row">  　　├ label  </td><td> レーベル  </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> レーベル名 </td><td> LADY HUNTERS  </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> レーベルID  </td><td> 76  </td></tr>
+<tr><td scope="row">  　　├ type </td><td> タイプ </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> タイプ名  </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> タイプID </td><td>   </td></tr>
+<tr><td scope="row">  　　├ color  </td><td> カラー </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> カラー名  </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> カラーID </td><td>   </td></tr>
+<tr><td scope="row">  　　└ size </td><td> サイズ </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ name  </td><td> サイズ名  </td><td>   </td></tr>
+<tr><td scope="row">  　　　└ id  </td><td> サイズID </td><td>   </td></tr>
+<tr><td scope="row">  　├ cdinfo  </td><td> CD情報  </td><td>   </td></tr>
+<tr><td scope="row">  　　└ kind </td><td> アルバム、シングル </td><td>   </td></tr>
+<tr><td scope="row">  　├ jancode </td><td> JANコード  </td><td> 4988135965905</td></tr>
+<tr><td scope="row">  　├ maker_product </td><td> メーカー品番  </td><td> 10003-54653 </td></tr>
+<tr><td scope="row">  　├ isbn  </td><td> ISBN  </td><td>   </td></tr>
+<tr><td scope="row">  　├ stock </td><td> 在庫状況  </td><td> reserve </td></tr>
+<tr><td scope="row">  　└ directory </td><td> パンくずリスト </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ id  </td><td> パンくずID  </td><td> 783 </td></tr>
+<tr><td scope="row">  　　　└ name  </td><td> パンくず名 </td><td> J-POP等 </td></tr>
+<tr><td scope="row">  　└ campaign </td><td> キャンペーン情報 </td><td>   </td></tr>
+<tr><td scope="row">  　　　├ date_begin  </td><td> キャンペーン開始日時  </td><td> 2023-05-01 10:00:00 </td></tr>
+<tr><td scope="row">  　　　├ date_end  </td><td> キャンペーン終了日時  </td><td> 2023-05-31 23:59:59 </td></tr>
+<tr><td scope="row">  　　　└ title  </td><td> キャンペーンタイトル </td><td>  </td></tr>
+                    </table>
+                <!--/api-area--></div>
+            <!-- /#api-content --></div>
+        <!-- /#api-page --></div>
+    <!-- /#content --></div>
+<!-- /#page --></div>
+
+<!-- /mu --></td>
+</tr>
+</table>
+</body>
+</html>

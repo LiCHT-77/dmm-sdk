@@ -119,8 +119,38 @@ export class DmmApiClient {
       } catch (error: unknown) {
         clearTimeout(timeoutId);
 
-        // タイムアウトエラーの場合
-        if (error instanceof Error && error.name === 'AbortError') {
+        let isTimeoutError = false;
+
+        // AbortErrorかどうかの判定ロジックを修正
+        // error が Error のインスタンスでない場合も考慮 (DOMException が Error を継承していない環境など)
+        if (typeof error === 'object' && error !== null) {
+          const err = error as { name?: string; message?: string }; // 型アサーションでプロパティにアクセス
+          const name = err.name;
+          const message = err.message;
+
+          if (name === 'AbortError') {
+            isTimeoutError = true;
+          } else if (typeof DOMException !== 'undefined' && error instanceof DOMException && name === 'AbortError') {
+            // DOMException の AbortError もチェック (二重チェックだが、より明示的に)
+            isTimeoutError = true;
+          } else if (message &&
+                     (message.includes('The operation was aborted') ||
+                      message.toLowerCase().includes('aborterror') ||
+                      message.toLowerCase().includes('aborted'))) {
+            isTimeoutError = true;
+          }
+        } else if (error instanceof Error) { // 通常の Error インスタンスの場合
+           if (error.name === 'AbortError') {
+            isTimeoutError = true;
+          } else if (error.message &&
+                     (error.message.includes('The operation was aborted') ||
+                      error.message.toLowerCase().includes('aborterror') ||
+                      error.message.toLowerCase().includes('aborted'))) {
+            isTimeoutError = true;
+          }
+        }
+
+        if (isTimeoutError) {
           throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
         }
 
