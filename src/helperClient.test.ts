@@ -43,6 +43,7 @@ describe('DmmApiHelperClient', () => {
       service_name: '動画',
       floor_code: 'videoa',
       floor_name: 'ビデオ',
+      category_name: 'テストカテゴリ',
       content_id: testCid,
       product_id: 'abcde12345',
       title: 'テスト商品',
