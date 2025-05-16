@@ -1,0 +1,30 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# DMM Affiliate API v3 TypeScript SDK プロジェクト概要
+
+このプロジェクトは、DMMアフィリエイトAPI v3 を TypeScript/JavaScript から簡単に利用するための非公式SDKです。
+
+## 主要ファイル
+
+*   **README:** [README.md](mdc:README.md) - プロジェクトの概要、導入方法、基本的な使い方について記載されています。
+*   **パッケージ管理:** [package.json](mdc:package.json) - プロジェクトの依存関係、スクリプト（ビルド、テスト等）が定義されています。
+*   **TypeScript設定:** [tsconfig.json](mdc:tsconfig.json) - TypeScriptのコンパイルオプションが設定されています。
+
+## ディレクトリ構造
+
+*   **`src/`**: TypeScriptのソースコードが格納されています。SDKのコアロジックはこのディレクトリ内にあります。
+*   **`dist/`**: ビルドによって生成されたJavaScriptファイルと型定義ファイル（`.d.ts`）が格納されます。 `package.json` の `main` および `types` フィールドは、このディレクトリ内のファイルを指しています。
+
+## 主要なnpmスクリプト
+
+*   `npm run build`: `src` ディレクトリの TypeScript コードをコンパイルし、`dist` ディレクトリに出力します。
+*   `npm test`: Jest を使用してテストを実行します。テスト設定は [jest.config.cjs](mdc:jest.config.cjs) で定義されています。
+
+## 開発のポイント
+
+*   API ID とアフィリエイト ID は DMM アフィリエイト管理画面から取得し、クライアント初期化時に設定する必要があります。
+*   SDKの利用方法や各APIの詳細は [README.md](mdc:README.md) および DMM アフィリエイト API v3 の公式ドキュメントを参照してください。
+*   型定義が提供されているため、TypeScriptプロジェクトでの開発が推奨されます。
