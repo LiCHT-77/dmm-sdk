@@ -1,8 +1,8 @@
 import {
   DmmApiClient,
-  DmmApiClientOptions,
+  type DmmApiClientOptions,
 } from './client';
-import {
+import type {
   ItemListRequestParams,
   Item,
 } from './types';
@@ -43,14 +43,10 @@ export class DmmApiHelperClient {
       hits: 1,
       offset: 1,
     };
-    try {
-      const response = await this.client.getItemList(params);
-      if (response.items && response.items.length > 0) {
-        return response.items[0];
-      }
-      return null;
-    } catch (error) {
-      throw error;
+    const response = await this.client.getItemList(params);
+    if (response.items && response.items.length > 0) {
+      return response.items[0];
     }
+    return null;
   }
 }

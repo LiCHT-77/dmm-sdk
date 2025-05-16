@@ -1,5 +1,5 @@
-import { URL, URLSearchParams } from 'url';
-import {
+import { URL, URLSearchParams } from 'node:url';
+import type {
   ItemListRequestParams,
   ItemListResponse,
   Item,
@@ -105,27 +105,22 @@ export class DmmApiClient {
         // リトライ対象のエラーか確認 (429 Too Many Requests or 5xx Server Error)
         if ((response.status === 429 || response.status >= 500) && attempts < this.maxRetries) {
           attempts++;
-          const delay = this.retryDelay * Math.pow(2, attempts - 1); // 指数バックオフ
+          const delay = this.retryDelay * 2 ** (attempts - 1); // 指数バックオフ
           console.warn(`API request to ${endpoint} failed with status ${response.status}. Retrying in ${delay}ms... (Attempt ${attempts}/${this.maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
 
         // リトライ対象外のエラー、または最大リトライ回数超過
-        let errorBody: any = null;
-        try {
-          errorBody = await response.json();
-        } catch (e) {
-          errorBody = await response.text();
-        }
+        const errorBody = await response.json().catch(e => response.text());
         const errorMessage = errorBody?.result?.message || (typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)) || response.statusText;
         throw new Error(`API request to ${endpoint} failed with status ${response.status} after ${attempts} attempts: ${errorMessage}`);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         clearTimeout(timeoutId);
 
         // タイムアウトエラーの場合
-        if (error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
         }
 
@@ -134,7 +129,7 @@ export class DmmApiClient {
 
         if (shouldRetryNetworkError && attempts < this.maxRetries) {
             attempts++;
-            const delay = this.retryDelay * Math.pow(2, attempts - 1);
+            const delay = this.retryDelay * 2 ** (attempts - 1);
             console.warn(`API request to ${endpoint} failed with network error: ${error.message}. Retrying in ${delay}ms... (Attempt ${attempts}/${this.maxRetries})`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
