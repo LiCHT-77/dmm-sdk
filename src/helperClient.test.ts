@@ -1,6 +1,6 @@
 import { DmmApiHelperClient } from './helperClient';
 import { DmmApiClient } from './client';
-import { Item, ItemListResponse } from './types';
+import type { Item, ItemListResponse } from './types';
 
 // DmmApiClientをモック化
 jest.mock('./client');
