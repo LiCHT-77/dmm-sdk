@@ -2,6 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   // ESM support for node-fetch or other ESM modules if needed
   // transform: {
   //   '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
