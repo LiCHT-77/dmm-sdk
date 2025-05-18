@@ -121,31 +121,15 @@ export class DmmApiClient {
 
         let isTimeoutError = false;
 
-        // AbortErrorかどうかの判定ロジックを修正
-        // error が Error のインスタンスでない場合も考慮 (DOMException が Error を継承していない環境など)
-        if (typeof error === 'object' && error !== null) {
-          const err = error as { name?: string; message?: string }; // 型アサーションでプロパティにアクセス
-          const name = err.name;
-          const message = err.message;
-
-          if (name === 'AbortError') {
+        if (error && typeof error === 'object') {
+          const err = error as { name?: string; message?: string };
+          if (err.name === 'AbortError') {
             isTimeoutError = true;
-          } else if (typeof DOMException !== 'undefined' && error instanceof DOMException && name === 'AbortError') {
-            // DOMException の AbortError もチェック (二重チェックだが、より明示的に)
-            isTimeoutError = true;
-          } else if (message &&
-                     (message.includes('The operation was aborted') ||
-                      message.toLowerCase().includes('aborterror') ||
-                      message.toLowerCase().includes('aborted'))) {
-            isTimeoutError = true;
-          }
-        } else if (error instanceof Error) { // 通常の Error インスタンスの場合
-           if (error.name === 'AbortError') {
-            isTimeoutError = true;
-          } else if (error.message &&
-                     (error.message.includes('The operation was aborted') ||
-                      error.message.toLowerCase().includes('aborterror') ||
-                      error.message.toLowerCase().includes('aborted'))) {
+          } else if (
+            err.message &&
+            (err.message.toLowerCase().includes('aborted') ||
+              err.message.includes('The operation was aborted'))
+          ) {
             isTimeoutError = true;
           }
         }
