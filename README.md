@@ -1,6 +1,6 @@
 # DMM Affiliate API v3 TypeScript SDK
 
-[![npm version](https://badge.fury.io/js/%40LiCHT-77%2Fdmm-sdk.svg)](https://badge.fury.io/js/%40LiCHT-77%2Fdmm-sdk)
+[![npm version](https://badge.fury.io/js/@licht-77%2Fdmm-sdk.svg)](https://badge.fury.io/js/@licht-77%2Fdmm-sdk)
 
 DMM Affiliate API v3 を TypeScript/JavaScript から簡単に利用するための非公式SDKです。
 
