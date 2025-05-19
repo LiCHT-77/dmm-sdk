@@ -17,23 +17,23 @@ import type {
 } from './types';
 
 /**
- * DMM APIクライアントのオプション
+ * Options for the DMM API client.
  */
 export interface DmmApiClientOptions {
   /** API ID */
   apiId: string;
-  /** アフィリエイトID */
+  /** Affiliate ID */
   affiliateId: string;
-  /** リクエストタイムアウト (ミリ秒, デフォルト: 10000) */
+  /** Request timeout in milliseconds (default: 10000) */
   timeout?: number;
-  /** 最大リトライ回数 (デフォルト: 3) */
+  /** Maximum number of retries (default: 3) */
   maxRetries?: number;
-  /** 初回リトライ遅延時間 (ミリ秒, デフォルト: 1000) */
+  /** Initial retry delay in milliseconds (default: 1000) */
   retryDelay?: number;
 }
 
 /**
- * DMM Affiliate API v3 クライアント
+ * DMM Affiliate API v3 Client.
  */
 export class DmmApiClient {
   private readonly baseUrl = 'https://api.dmm.com/affiliate/v3';
@@ -44,8 +44,9 @@ export class DmmApiClient {
   private readonly retryDelay: number;
 
   /**
-   * DmmApiClientのインスタンスを作成します。
-   * @param options クライアントオプション
+   * Creates an instance of DmmApiClient.
+   * @param {DmmApiClientOptions} options - Client options.
+   * @throws {Error} if apiId or affiliateId is missing.
    */
   constructor(options: DmmApiClientOptions) {
     if (!options.apiId || !options.affiliateId) {
@@ -59,11 +60,13 @@ export class DmmApiClient {
   }
 
   /**
-   * APIエンドポイントにリクエストを送信します。
-   * @param endpoint APIエンドポイントのパス (例: '/ItemList')
-   * @param params APIパラメータ
-   * @returns APIレスポンスの result 部分
+   * Sends a request to the API endpoint.
    * @protected
+   * @template T The expected response type.
+   * @param {string} endpoint - The API endpoint path (e.g., '/ItemList').
+   * @param {Record<string, string | number | undefined>} [params] - API parameters.
+   * @returns {Promise<T>} The 'result' part of the API response.
+   * @throws {Error} if the request fails, times out, or the response format is invalid.
    */
   protected async request<T>(endpoint: string, params?: Record<string, string | number | undefined>): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
@@ -97,15 +100,15 @@ export class DmmApiClient {
           return data.result as T;
         }
 
-        // リトライ対象のエラーか確認 (429 Too Many Requests or 5xx Server Error)
+        // Check if the error is retryable (429 Too Many Requests or 5xx Server Error)
         if ((response.status === 429 || response.status >= 500) && attempts < this.maxRetries) {
           attempts++;
-          const delay = this.retryDelay * 2 ** (attempts - 1); // 指数バックオフ
+          const delay = this.retryDelay * 2 ** (attempts - 1); // Exponential backoff
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
 
-        // リトライ対象外のエラー、または最大リトライ回数超過
+        // Non-retryable error or max retries exceeded
         const errorBody = await response.json().catch(e => response.text());
         const errorMessage = errorBody?.result?.message || (typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)) || response.statusText;
         throw new Error(`API request to ${endpoint} failed with status ${response.status} after ${attempts} attempts: ${errorMessage}`);
@@ -132,7 +135,7 @@ export class DmmApiClient {
           throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
         }
 
-        // fetch自体が失敗した場合 (TypeErrorなど) のみリトライ対象とする
+        // Only retry network errors (e.g., TypeError if fetch itself fails)
         const shouldRetryNetworkError = (error instanceof TypeError);
 
         if (shouldRetryNetworkError && attempts < this.maxRetries) {
@@ -142,20 +145,20 @@ export class DmmApiClient {
             continue;
         }
 
-        // リトライ対象外のエラー、または最大リトライ回数超過
-        // HTTPエラーレスポンス起因のエラー (JSONパース失敗含む) は上で処理済み
+        // Non-retryable error or max retries exceeded
+        // HTTP error responses (including JSON parse failures) are handled above
         const originalErrorMessage = error instanceof Error ? error.message : String(error);
         throw new Error(`Error during API request to ${endpoint} after ${attempts} attempts: ${originalErrorMessage}`);
       }
     }
-    // この行には通常到達しないはずだが、型チェックのためにエラーを投げる
+    // This line should normally not be reached, but throw an error for type checking.
     throw new Error(`Reached end of request function unexpectedly after ${this.maxRetries + 1} attempts for endpoint ${endpoint}.`);
   }
 
   /**
-   * 商品検索API (ItemList) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns 商品検索結果
+   * Calls the Item List API.
+   * @param {ItemListRequestParams} params - Search parameters.
+   * @returns {Promise<ItemListResponse>} Item search results.
    */
   public async getItemList(params: ItemListRequestParams): Promise<ItemListResponse> {
     const apiParams = { ...params };
@@ -163,64 +166,65 @@ export class DmmApiClient {
   }
 
   /**
-   * フロア取得API (FloorList) を呼び出します。
-   * @returns フロアリスト
+   * Calls the Floor List API.
+   * @returns {Promise<FloorListResponse>} Floor list.
    */
   public async getFloorList(): Promise<FloorListResponse> {
-    // このAPIは追加のパラメータを取りません
+    // This API does not take additional parameters.
     return this.request<FloorListResponse>('/FloorList');
   }
 
   /**
-   * 女優検索API (ActressSearch) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns 女優検索結果
+   * Calls the Actress Search API.
+   * @param {ActressSearchRequestParams} params - Search parameters.
+   * @returns {Promise<ActressSearchResponse>} Actress search results.
    */
   public async searchActress(params: ActressSearchRequestParams): Promise<ActressSearchResponse> {
     return this.request<ActressSearchResponse>('/ActressSearch', {...params});
   }
 
   /**
-   * ジャンル検索API (GenreSearch) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns ジャンル検索結果
+   * Calls the Genre Search API.
+   * @param {GenreSearchRequestParams} params - Search parameters.
+   * @returns {Promise<GenreSearchResponse>} Genre search results.
    */
   public async searchGenre(params: GenreSearchRequestParams): Promise<GenreSearchResponse> {
     return this.request<GenreSearchResponse>('/GenreSearch', {...params});
   }
 
   /**
-   * メーカー検索API (MakerSearch) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns メーカー検索結果
+   * Calls the Maker Search API.
+   * @param {MakerSearchRequestParams} params - Search parameters.
+   * @returns {Promise<MakerSearchResponse>} Maker search results.
    */
   public async searchMaker(params: MakerSearchRequestParams): Promise<MakerSearchResponse> {
     return this.request<MakerSearchResponse>('/MakerSearch', {...params});
   }
 
   /**
-   * シリーズ検索API (SeriesSearch) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns シリーズ検索結果
+   * Calls the Series Search API.
+   * @param {SeriesSearchRequestParams} params - Search parameters.
+   * @returns {Promise<SeriesSearchResponse>} Series search results.
    */
   public async searchSeries(params: SeriesSearchRequestParams): Promise<SeriesSearchResponse> {
     return this.request<SeriesSearchResponse>('/SeriesSearch', {...params});
   }
 
   /**
-   * 作者検索API (AuthorSearch) を呼び出します。
-   * @param params 検索パラメータ
-   * @returns 作者検索結果
+   * Calls the Author Search API.
+   * @param {AuthorSearchRequestParams} params - Search parameters.
+   * @returns {Promise<AuthorSearchResponse>} Author search results.
    */
   public async searchAuthor(params: AuthorSearchRequestParams): Promise<AuthorSearchResponse> {
     return this.request<AuthorSearchResponse>('/AuthorSearch', {...params});
   }
 
   /**
-   * 商品検索API (ItemList) を使用して、指定された条件に一致するすべての商品を非同期ジェネレータで取得します。
-   * 大量の商品を効率的に処理するのに適しています。
-   * @param params 検索パラメータ (hits, offset は内部で管理されるため無視されます)
-   * @yields {Item} 一致した商品情報
+   * Retrieves all items matching the given criteria using the Item List API with an async generator.
+   * Suitable for efficiently processing a large number of items.
+   * @param {Omit<ItemListRequestParams, 'hits' | 'offset'>} params - Search parameters (hits and offset are managed internally and will be ignored).
+   * @yields {Item} Matched item information.
+   * @throws {Error} if an error occurs during API calls.
    */
   public async *getAllItems(params: Omit<ItemListRequestParams, 'hits' | 'offset'>): AsyncGenerator<Item, void, undefined> {
     let currentOffset = 1;

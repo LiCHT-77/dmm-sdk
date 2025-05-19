@@ -8,33 +8,33 @@ import type {
 } from './types';
 
 /**
- * DmmApiClientをラップし、追加機能を提供するクライアント
+ * A helper client that wraps DmmApiClient to provide additional functionalities.
  */
 export class DmmApiHelperClient {
   private readonly client: DmmApiClient;
 
   /**
-   * DmmApiHelperClientのインスタンスを作成します。
-   * @param options DMM APIクライアントのオプション
+   * Creates an instance of DmmApiHelperClient.
+   * @param {DmmApiClientOptions} options - Options for the DMM API client.
    */
   constructor(options: DmmApiClientOptions) {
     this.client = new DmmApiClient(options);
   }
 
   /**
-   * 元のDmmApiClientインスタンスを取得します。
-   * @returns DmmApiClientインスタンス
+   * Gets the underlying DmmApiClient instance.
+   * @returns {DmmApiClient} The DmmApiClient instance.
    */
   public api(): DmmApiClient {
     return this.client;
   }
 
   /**
-   * 商品ID (cid) を指定して単一の商品を取得します。
-   * ItemList APIを利用し、最初に見つかった商品を返します。
-   * @param cid 商品ID
-   * @param options 追加のItemListRequestParams (siteなど)
-   * @returns 商品情報、見つからない場合はnull
+   * Retrieves a single item by its Content ID (cid).
+   * This method uses the ItemList API and returns the first item found.
+   * @param {string} cid - The Content ID of the item.
+   * @param {Omit<ItemListRequestParams, 'cid' | 'hits' | 'offset'>} [options] - Additional ItemListRequestParams (e.g., site).
+   * @returns {Promise<Item | null>} The item information, or null if not found.
    */
   public async getItemById(cid: string, options?: Omit<ItemListRequestParams, 'cid' | 'hits' | 'offset'>): Promise<Item | null> {
     const params: ItemListRequestParams = {
