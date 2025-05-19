@@ -41,7 +41,6 @@ export class DmmApiClient {
   private readonly baseUrl = 'https://api.dmm.com/affiliate/v3';
   private readonly apiId: string;
   private readonly affiliateId: string;
-  private readonly site: string;
   private readonly timeout: number;
   private readonly maxRetries: number;
   private readonly retryDelay: number;
@@ -56,7 +55,6 @@ export class DmmApiClient {
     }
     this.apiId = options.apiId;
     this.affiliateId = options.affiliateId;
-    this.site = options.site || 'DMM.com';
     this.timeout = options.timeout || 10000;
     this.maxRetries = options.maxRetries ?? 3;
     this.retryDelay = options.retryDelay || 1000;
@@ -74,11 +72,10 @@ export class DmmApiClient {
     const queryParams: Record<string, string> = {
         api_id: this.apiId,
         affiliate_id: this.affiliateId,
-        site: String(params.site ?? this.site),
     };
 
     for (const key in params) {
-        if (key !== 'api_id' && key !== 'affiliate_id' && key !== 'site' && params[key] !== undefined) {
+        if (key !== 'api_id' && key !== 'affiliate_id' && params[key] !== undefined) {
             queryParams[key] = String(params[key]);
         }
     }
@@ -163,10 +160,8 @@ export class DmmApiClient {
    * @returns 商品検索結果
    */
   public async getItemList(params: ItemListRequestParams): Promise<ItemListResponse> {
-    const { site, ...apiParams } = params;
-    const requestSite = site || this.site;
-
-    return this.request<ItemListResponse>('/ItemList', { ...apiParams, site: requestSite });
+    const apiParams = { ...params };
+    return this.request<ItemListResponse>('/ItemList', apiParams);
   }
 
   /**
@@ -175,7 +170,7 @@ export class DmmApiClient {
    */
   public async getFloorList(): Promise<FloorListResponse> {
     // このAPIは追加のパラメータを取りません
-    return this.request<FloorListResponse>('/FloorList', {});
+    return this.request<FloorListResponse>('/FloorList', { site: 'DMM.com' });
   }
 
   /**

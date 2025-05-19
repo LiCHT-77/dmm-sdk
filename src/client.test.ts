@@ -31,7 +31,8 @@ describe('DmmApiClient', () => {
   beforeEach(() => {
     mockFetch.mockClear();
     client = new DmmApiClient({
-        ...defaultOptions,
+        apiId: defaultOptions.apiId,
+        affiliateId: defaultOptions.affiliateId,
         timeout: testTimeout,
         retryDelay: testRetryDelay,
         maxRetries: testMaxRetries,
@@ -47,22 +48,30 @@ describe('DmmApiClient', () => {
       .toThrow('API ID and Affiliate ID are required.');
   });
 
-  it('should create an instance with default site', () => {
-    const defaultClient = new DmmApiClient(defaultOptions);
-    expect(defaultClient).toBeInstanceOf(DmmApiClient);
-    expect((defaultClient as unknown as { site: string }).site).toBe('DMM.com');
-  });
-
-  it('should use the site specified in options as default for requests', async () => {
-    const fanzaClient = new DmmApiClient({ ...defaultOptions, site: 'FANZA' });
+  it('should default to DMM.com site for requests like getFloorList if not overridable by params', async () => {
+    const defaultSiteClient = new DmmApiClient(defaultOptions);
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
-    await fanzaClient.getFloorList(); // getFloorList は site を引数に取らない
+    await defaultSiteClient.getFloorList();
 
-    const expectedUrl = new URL(`${(fanzaClient as unknown as { baseUrl: string }).baseUrl}/FloorList`);
+    const expectedUrl = new URL(`${(defaultSiteClient as unknown as { baseUrl: string }).baseUrl}/FloorList`);
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'FANZA', // ここが FANZA になることを期待
+        site: 'DMM.com',
+    });
+    expectedUrl.search = searchParams.toString();
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+  });
+
+  it('getFloorList should always use DMM.com site by default', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+    await client.getFloorList();
+
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/FloorList`);
+    const searchParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -100,15 +109,15 @@ describe('DmmApiClient', () => {
         json: async () => mockResponse,
       });
 
-      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
+      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, {...params, site: 'DMM.com' });
 
       const expectedUrl = new URL(`${expectedBaseUrl}${endpoint}`);
       const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         param1: 'value1',
         param2: '123',
+        site: 'DMM.com',
       });
       expectedUrl.search = searchParams.toString();
 
@@ -119,25 +128,24 @@ describe('DmmApiClient', () => {
     it('should not include undefined parameters in the URL query', async () => {
       const paramsWithUndefined = {
         param1: 'value1',
-        param2: undefined, // このパラメータは除外されるべき
+        param2: undefined,
         param3: 'value3',
-        param4: undefined, // このパラメータも除外されるべき
+        param4: undefined,
       };
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ result: { success: true } }),
       });
 
-      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, paramsWithUndefined);
+      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, {...paramsWithUndefined, site: 'DMM.com'});
 
       const expectedUrl = new URL(`${expectedBaseUrl}${endpoint}`);
       const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         param1: 'value1',
         param3: 'value3',
-        // param2 と param4 は含まれない
+        site: 'DMM.com',
       });
       expectedUrl.search = searchParams.toString();
 
@@ -271,21 +279,19 @@ describe('DmmApiClient', () => {
             const signal = options?.signal;
             await new Promise<void>((_resolve, reject) => {
                 const timeoutId = setTimeout(() => {
-                    // タイムアウトより長くかかった場合
                 }, testTimeout + 100);
                 signal?.addEventListener('abort', () => {
                     clearTimeout(timeoutId);
                     reject(new DOMException('The operation was aborted.', 'AbortError'));
                 });
             });
-            // Abort されなかった場合
             return { ok: true, json: async () => ({ result: { success: true } }) };
         });
 
         await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
             .rejects
             .toThrow(`API request to ${endpoint} timed out after ${testTimeout}ms`);
-        expect(mockFetch).toHaveBeenCalledTimes(1); // タイムアウトなのでリトライしない
+        expect(mockFetch).toHaveBeenCalledTimes(1);
     }, testTimeout + 1000);
 
      it('should not timeout if fetch responds within time', async () => {
@@ -293,7 +299,7 @@ describe('DmmApiClient', () => {
         mockFetch.mockImplementation(() =>
             new Promise(resolve => setTimeout(() => resolve({
                  ok: true, json: async () => ({ result: mockResult })
-            }), testTimeout - 50)) // クライアントタイムアウト未満
+            }), testTimeout - 50))
         );
 
         await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)).resolves.toEqual(mockResult);
@@ -318,17 +324,17 @@ describe('DmmApiClient', () => {
       const noRetryClient = new DmmApiClient({
         ...defaultOptions,
         maxRetries: 0,
-        retryDelay: testRetryDelay, // retryDelayはテスト時間短縮のため小さい値のまま
+        retryDelay: testRetryDelay,
         timeout: testTimeout,
       });
       const networkError = new TypeError('Failed to fetch');
-      mockFetch.mockRejectedValueOnce(networkError); // 1回だけエラーを発生させる
+      mockFetch.mockRejectedValueOnce(networkError);
 
       await expect(
         (noRetryClient as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)
       ).rejects.toThrow(`Error during API request to ${endpoint} after 0 attempts: ${networkError.message}`);
 
-      expect(mockFetch).toHaveBeenCalledTimes(1); // fetchが1回だけ呼ばれることを確認
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -342,11 +348,11 @@ describe('DmmApiClient', () => {
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         service: params.service || '',
         floor: params.floor || '',
         hits: String(params.hits || ''),
         keyword: params.keyword || '',
+        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
@@ -393,12 +399,10 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         initial: params.initial || '',
         hits: String(params.hits || ''),
     });
     expectedUrl.search = searchParams.toString();
-    expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
   });
 
@@ -411,7 +415,6 @@ describe('DmmApiClient', () => {
     const searchParams = new URLSearchParams({
       api_id: defaultOptions.apiId,
       affiliate_id: defaultOptions.affiliateId,
-      site: 'DMM.com',
       initial: 'い',
       hits: '10',
       offset: '11',
@@ -429,7 +432,6 @@ describe('DmmApiClient', () => {
     const searchParams = new URLSearchParams({
       api_id: defaultOptions.apiId,
       affiliate_id: defaultOptions.affiliateId,
-      site: 'DMM.com',
       initial: 'う',
       sort: '-name',
     });
@@ -445,7 +447,6 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         floor_id: params.floor_id || '',
         initial: params.initial || '',
     });
@@ -461,7 +462,6 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         floor_id: params.floor_id || '',
         initial: params.initial || '',
     });
@@ -477,7 +477,6 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         floor_id: params.floor_id || '',
         initial: params.initial || '',
     });
@@ -493,7 +492,6 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         floor_id: params.floor_id || '',
         initial: params.initial || '',
     });
@@ -517,7 +515,7 @@ describe('DmmApiClient', () => {
       const page3Items: Partial<Item>[] = Array.from({ length: 50 }, (_, i) => ({ content_id: `item_${i + 201}` }));
 
       mockFetch
-        .mockResolvedValueOnce({ // 1ページ目
+        .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             result: {
@@ -529,7 +527,7 @@ describe('DmmApiClient', () => {
             },
           }),
         })
-        .mockResolvedValueOnce({ // 2ページ目
+        .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             result: {
@@ -541,7 +539,7 @@ describe('DmmApiClient', () => {
             },
           }),
         })
-        .mockResolvedValueOnce({ // 3ページ目
+        .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             result: {
@@ -569,7 +567,6 @@ describe('DmmApiClient', () => {
       const baseSearchParams = {
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
         service: params.service || '',
         floor: params.floor || '',
         keyword: params.keyword || '',
@@ -577,15 +574,18 @@ describe('DmmApiClient', () => {
       };
 
       const url1 = new URL(expectedUrlBase);
-      url1.search = new URLSearchParams({ ...baseSearchParams, offset: '1' }).toString();
+      const p1 = { ...baseSearchParams, offset: '1', site: 'DMM.com' };
+      url1.search = new URLSearchParams(p1).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(1, url1.toString(), expect.any(Object));
 
       const url2 = new URL(expectedUrlBase);
-      url2.search = new URLSearchParams({ ...baseSearchParams, offset: '101' }).toString();
+      const p2 = { ...baseSearchParams, offset: '101', site: 'DMM.com' };
+      url2.search = new URLSearchParams(p2).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(2, url2.toString(), expect.any(Object));
 
       const url3 = new URL(expectedUrlBase);
-      url3.search = new URLSearchParams({ ...baseSearchParams, offset: '201' }).toString();
+      const p3 = { ...baseSearchParams, offset: '201', site: 'DMM.com' };
+      url3.search = new URLSearchParams(p3).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(3, url3.toString(), expect.any(Object));
     });
 
@@ -647,7 +647,6 @@ describe('DmmApiClient', () => {
         mockFetch.mockImplementation(async () => {
             callCount++;
             if (callCount === 1) {
-                // 1回目の呼び出しは成功
                 return {
                     ok: true,
                     json: async () => ({
@@ -661,7 +660,6 @@ describe('DmmApiClient', () => {
                     }),
                 };
             }
-            // 2回目以降の呼び出しはネットワークエラー
             throw apiError;
         });
 
