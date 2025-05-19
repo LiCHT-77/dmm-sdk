@@ -55,7 +55,6 @@ describe('DmmApiHelperClient', () => {
 
     it('should call getItemList with correct parameters and return the item', async () => {
       const mockResponse: ItemListResponse = {
-        request: { parameters: { cid: testCid, hits: 1, offset: 1 } },
         result_count: 1,
         total_count: 1,
         first_position: 1,
@@ -77,7 +76,6 @@ describe('DmmApiHelperClient', () => {
 
     it('should call getItemList with additional options', async () => {
         const mockResponse: ItemListResponse = {
-          request: { parameters: { site: 'FANZA', cid: testCid, hits: 1, offset: 1 } },
           result_count: 1,
           total_count: 1,
           first_position: 1,
@@ -100,7 +98,6 @@ describe('DmmApiHelperClient', () => {
 
     it('should return null if getItemList returns no items', async () => {
       const mockResponse: ItemListResponse = {
-        request: { parameters: { cid: testCid, hits: 1, offset: 1 } },
         result_count: 0,
         total_count: 0,
         first_position: 0, // 0件の場合は0になることが多い
