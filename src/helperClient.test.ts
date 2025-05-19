@@ -19,7 +19,7 @@ vi.mock('./client', async (importOriginal) => {
     mockDmmApiClientInstance = {
       getItemList: mockGetItemList,
       // 他のモックメソッド
-    } as any; // DmmApiClientの完全なモックではないためanyでキャスト
+    } as unknown as typeof mockDmmApiClientInstance; // DmmApiClientの完全なモックではないためanyでキャスト
     return mockDmmApiClientInstance;
   });
 
