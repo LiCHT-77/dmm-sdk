@@ -21,7 +21,7 @@ alwaysApply: true
 ## 主要なnpmスクリプト
 
 *   `npm run build`: `src` ディレクトリの TypeScript コードをコンパイルし、`dist` ディレクトリに出力します。
-*   `npm test`: Jest を使用してテストを実行します。テスト設定は [jest.config.cjs](mdc:jest.config.cjs) で定義されています。
+*   `npm test`: Vitest を使用してテストを実行します。テスト設定は  [vitest.config.ts](mdc:vitest.config.ts)で定義されています。
 
 ## 開発のポイント
 
