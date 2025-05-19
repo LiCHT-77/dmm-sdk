@@ -24,8 +24,6 @@ export interface DmmApiClientOptions {
   apiId: string;
   /** アフィリエイトID */
   affiliateId: string;
-  /** サイトコード (デフォルト: 'DMM.com') */
-  site?: string;
   /** リクエストタイムアウト (ミリ秒, デフォルト: 10000) */
   timeout?: number;
   /** 最大リトライ回数 (デフォルト: 3) */
@@ -67,7 +65,7 @@ export class DmmApiClient {
    * @returns APIレスポンスの result 部分
    * @protected
    */
-  protected async request<T>(endpoint: string, params: Record<string, string | number | undefined>): Promise<T> {
+  protected async request<T>(endpoint: string, params?: Record<string, string | number | undefined>): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     const queryParams: Record<string, string> = {
         api_id: this.apiId,
@@ -170,7 +168,7 @@ export class DmmApiClient {
    */
   public async getFloorList(): Promise<FloorListResponse> {
     // このAPIは追加のパラメータを取りません
-    return this.request<FloorListResponse>('/FloorList', { site: 'DMM.com' });
+    return this.request<FloorListResponse>('/FloorList');
   }
 
   /**
@@ -179,7 +177,7 @@ export class DmmApiClient {
    * @returns 女優検索結果
    */
   public async searchActress(params: ActressSearchRequestParams): Promise<ActressSearchResponse> {
-    return this.request<ActressSearchResponse>('/ActressSearch', params as Record<string, string | number | undefined>);
+    return this.request<ActressSearchResponse>('/ActressSearch', {...params});
   }
 
   /**
@@ -188,7 +186,7 @@ export class DmmApiClient {
    * @returns ジャンル検索結果
    */
   public async searchGenre(params: GenreSearchRequestParams): Promise<GenreSearchResponse> {
-    return this.request<GenreSearchResponse>('/GenreSearch', params as unknown as Record<string, string | number | undefined>);
+    return this.request<GenreSearchResponse>('/GenreSearch', {...params});
   }
 
   /**
@@ -197,7 +195,7 @@ export class DmmApiClient {
    * @returns メーカー検索結果
    */
   public async searchMaker(params: MakerSearchRequestParams): Promise<MakerSearchResponse> {
-    return this.request<MakerSearchResponse>('/MakerSearch', params as unknown as Record<string, string | number | undefined>);
+    return this.request<MakerSearchResponse>('/MakerSearch', {...params});
   }
 
   /**
@@ -206,7 +204,7 @@ export class DmmApiClient {
    * @returns シリーズ検索結果
    */
   public async searchSeries(params: SeriesSearchRequestParams): Promise<SeriesSearchResponse> {
-    return this.request<SeriesSearchResponse>('/SeriesSearch', params as unknown as Record<string, string | number | undefined>);
+    return this.request<SeriesSearchResponse>('/SeriesSearch', {...params});
   }
 
   /**
@@ -215,7 +213,7 @@ export class DmmApiClient {
    * @returns 作者検索結果
    */
   public async searchAuthor(params: AuthorSearchRequestParams): Promise<AuthorSearchResponse> {
-    return this.request<AuthorSearchResponse>('/AuthorSearch', params as unknown as Record<string, string | number | undefined>);
+    return this.request<AuthorSearchResponse>('/AuthorSearch', {...params});
   }
 
   /**
