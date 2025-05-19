@@ -53,11 +53,39 @@ describe('DmmApiClient', () => {
     expect((defaultClient as unknown as { site: string }).site).toBe('DMM.com');
   });
 
+  it('should use the site specified in options as default for requests', async () => {
+    const fanzaClient = new DmmApiClient({ ...defaultOptions, site: 'FANZA' });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+    await fanzaClient.getFloorList(); // getFloorList は site を引数に取らない
+
+    const expectedUrl = new URL(`${(fanzaClient as unknown as { baseUrl: string }).baseUrl}/FloorList`);
+    const searchParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        site: 'FANZA', // ここが FANZA になることを期待
+    });
+    expectedUrl.search = searchParams.toString();
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+  });
+
   it('should create an instance with default timeout and retries', () => {
      const defaultClient = new DmmApiClient(defaultOptions);
     expect((defaultClient as unknown as { timeout: number }).timeout).toBe(clientDefaultTimeout);
     expect((defaultClient as unknown as { maxRetries: number }).maxRetries).toBe(clientDefaultMaxRetries);
     expect((defaultClient as unknown as { retryDelay: number }).retryDelay).toBe(clientDefaultRetryDelay);
+  });
+
+  it('should create an instance with specified timeout, maxRetries, and retryDelay', () => {
+    const customOptions: DmmApiClientOptions = {
+      ...defaultOptions,
+      timeout: 5000,
+      maxRetries: 5,
+      retryDelay: 500,
+    };
+    const customClient = new DmmApiClient(customOptions);
+    expect((customClient as unknown as { timeout: number }).timeout).toBe(5000);
+    expect((customClient as unknown as { maxRetries: number }).maxRetries).toBe(5);
+    expect((customClient as unknown as { retryDelay: number }).retryDelay).toBe(500);
   });
 
   describe('request method (including timeout and retry logic)', () => {
@@ -85,6 +113,34 @@ describe('DmmApiClient', () => {
       expectedUrl.search = searchParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    it('should not include undefined parameters in the URL query', async () => {
+      const paramsWithUndefined = {
+        param1: 'value1',
+        param2: undefined, // このパラメータは除外されるべき
+        param3: 'value3',
+        param4: undefined, // このパラメータも除外されるべき
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ result: { success: true } }),
+      });
+
+      await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, paramsWithUndefined);
+
+      const expectedUrl = new URL(`${expectedBaseUrl}${endpoint}`);
+      const searchParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        site: 'DMM.com',
+        param1: 'value1',
+        param3: 'value3',
+        // param2 と param4 は含まれない
+      });
+      expectedUrl.search = searchParams.toString();
+
       expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
     });
 
@@ -257,6 +313,23 @@ describe('DmmApiClient', () => {
             .toThrow('Invalid API response format: "result" field is missing.');
         expect(mockFetch).toHaveBeenCalledTimes(1);
     });
+
+    it('should not retry if maxRetries is 0', async () => {
+      const noRetryClient = new DmmApiClient({
+        ...defaultOptions,
+        maxRetries: 0,
+        retryDelay: testRetryDelay, // retryDelayはテスト時間短縮のため小さい値のまま
+        timeout: testTimeout,
+      });
+      const networkError = new TypeError('Failed to fetch');
+      mockFetch.mockRejectedValueOnce(networkError); // 1回だけエラーを発生させる
+
+      await expect(
+        (noRetryClient as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)
+      ).rejects.toThrow(`Error during API request to ${endpoint} after 0 attempts: ${networkError.message}`);
+
+      expect(mockFetch).toHaveBeenCalledTimes(1); // fetchが1回だけ呼ばれることを確認
+    });
   });
 
   // --- API メソッドのテスト ---
@@ -326,6 +399,41 @@ describe('DmmApiClient', () => {
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+  });
+
+  it('searchActress should call request with hits and offset', async () => {
+    const params: ActressSearchRequestParams = { initial: 'い', hits: 10, offset: 11 };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+    await client.searchActress(params);
+
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ActressSearch`);
+    const searchParams = new URLSearchParams({
+      api_id: defaultOptions.apiId,
+      affiliate_id: defaultOptions.affiliateId,
+      site: 'DMM.com',
+      initial: 'い',
+      hits: '10',
+      offset: '11',
+    });
+    expectedUrl.search = searchParams.toString();
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+  });
+
+  it('searchActress should call request with sort parameter', async () => {
+    const params: ActressSearchRequestParams = { initial: 'う', sort: '-name' };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+    await client.searchActress(params);
+
+    const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ActressSearch`);
+    const searchParams = new URLSearchParams({
+      api_id: defaultOptions.apiId,
+      affiliate_id: defaultOptions.affiliateId,
+      site: 'DMM.com',
+      initial: 'う',
+      sort: '-name',
+    });
+    expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
   });
 
