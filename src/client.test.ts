@@ -57,7 +57,6 @@ describe('DmmApiClient', () => {
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -71,7 +70,6 @@ describe('DmmApiClient', () => {
     const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
@@ -352,10 +350,9 @@ describe('DmmApiClient', () => {
         floor: params.floor || '',
         hits: String(params.hits || ''),
         keyword: params.keyword || '',
-        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
-    expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
+    expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
   });
 
@@ -384,10 +381,9 @@ describe('DmmApiClient', () => {
      const searchParams = new URLSearchParams({
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        site: 'DMM.com',
     });
     expectedUrl.search = searchParams.toString();
-    expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
+    expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
   });
 
@@ -574,17 +570,17 @@ describe('DmmApiClient', () => {
       };
 
       const url1 = new URL(expectedUrlBase);
-      const p1 = { ...baseSearchParams, offset: '1', site: 'DMM.com' };
+      const p1 = { ...baseSearchParams, offset: '1' };
       url1.search = new URLSearchParams(p1).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(1, url1.toString(), expect.any(Object));
 
       const url2 = new URL(expectedUrlBase);
-      const p2 = { ...baseSearchParams, offset: '101', site: 'DMM.com' };
+      const p2 = { ...baseSearchParams, offset: '101' };
       url2.search = new URLSearchParams(p2).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(2, url2.toString(), expect.any(Object));
 
       const url3 = new URL(expectedUrlBase);
-      const p3 = { ...baseSearchParams, offset: '201', site: 'DMM.com' };
+      const p3 = { ...baseSearchParams, offset: '201' };
       url3.search = new URLSearchParams(p3).toString();
       expect(mockFetch).toHaveBeenNthCalledWith(3, url3.toString(), expect.any(Object));
     });
