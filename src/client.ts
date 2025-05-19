@@ -44,6 +44,7 @@ export class DmmApiClient {
   public static readonly MakerSearchEndpoint = '/MakerSearch';
   public static readonly SeriesSearchEndpoint = '/SeriesSearch';
   public static readonly AuthorSearchEndpoint = '/AuthorSearch';
+  public static readonly DefaultHitsPerPageForGetAllItems = 100;
   private readonly apiId: string;
   private readonly affiliateId: string;
   private readonly timeout: number;
@@ -235,7 +236,7 @@ export class DmmApiClient {
    */
   public async *getAllItems(params: Omit<ItemListRequestParams, 'hits' | 'offset'>): AsyncGenerator<Item, void, undefined> {
     let currentOffset = 1;
-    const hitsPerPage = 100;
+    const hitsPerPage = DmmApiClient.DefaultHitsPerPageForGetAllItems;
     let totalCount = -1;
 
     const requestParams: ItemListRequestParams = {

@@ -503,7 +503,7 @@ describe('DmmApiClient', () => {
       floor: 'videoa',
       keyword: 'test',
     };
-    const hitsPerPage = 100;
+    const hitsPerPage = DmmApiClient.DefaultHitsPerPageForGetAllItems;
 
     it('should yield all items from multiple pages', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
       const totalItems = 250;
