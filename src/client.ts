@@ -106,7 +106,6 @@ export class DmmApiClient {
         if ((response.status === 429 || response.status >= 500) && attempts < this.maxRetries) {
           attempts++;
           const delay = this.retryDelay * 2 ** (attempts - 1); // 指数バックオフ
-          console.warn(`API request to ${endpoint} failed with status ${response.status}. Retrying in ${delay}ms... (Attempt ${attempts}/${this.maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -144,7 +143,6 @@ export class DmmApiClient {
         if (shouldRetryNetworkError && attempts < this.maxRetries) {
             attempts++;
             const delay = this.retryDelay * 2 ** (attempts - 1);
-            console.warn(`API request to ${endpoint} failed with network error: ${error.message}. Retrying in ${delay}ms... (Attempt ${attempts}/${this.maxRetries})`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
         }
