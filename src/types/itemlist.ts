@@ -208,10 +208,10 @@ export interface Item {
  * 商品検索API (ItemList) のレスポンス
  */
 export interface ItemListResponse {
-  /** リクエストパラメータ */
-  request: {
-    parameters: ItemListRequestParams;
-  };
+  // /** リクエストパラメータ */
+  // request: {
+  //   parameters: ItemListRequestParams;
+  // };
   /** 総件数 */
   result_count: number;
   /** 取得件数 */
