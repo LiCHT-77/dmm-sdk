@@ -37,6 +37,13 @@ export interface DmmApiClientOptions {
  */
 export class DmmApiClient {
   private readonly baseUrl = 'https://api.dmm.com/affiliate/v3';
+  public static readonly ItemListEndpoint = '/ItemList';
+  public static readonly FloorListEndpoint = '/FloorList';
+  public static readonly ActressSearchEndpoint = '/ActressSearch';
+  public static readonly GenreSearchEndpoint = '/GenreSearch';
+  public static readonly MakerSearchEndpoint = '/MakerSearch';
+  public static readonly SeriesSearchEndpoint = '/SeriesSearch';
+  public static readonly AuthorSearchEndpoint = '/AuthorSearch';
   private readonly apiId: string;
   private readonly affiliateId: string;
   private readonly timeout: number;
@@ -162,7 +169,7 @@ export class DmmApiClient {
    */
   public async getItemList(params: ItemListRequestParams): Promise<ItemListResponse> {
     const apiParams = { ...params };
-    return this.request<ItemListResponse>('/ItemList', apiParams);
+    return this.request<ItemListResponse>(DmmApiClient.ItemListEndpoint, apiParams);
   }
 
   /**
@@ -171,7 +178,7 @@ export class DmmApiClient {
    */
   public async getFloorList(): Promise<FloorListResponse> {
     // This API does not take additional parameters.
-    return this.request<FloorListResponse>('/FloorList');
+    return this.request<FloorListResponse>(DmmApiClient.FloorListEndpoint);
   }
 
   /**
@@ -180,7 +187,7 @@ export class DmmApiClient {
    * @returns {Promise<ActressSearchResponse>} Actress search results.
    */
   public async searchActress(params: ActressSearchRequestParams): Promise<ActressSearchResponse> {
-    return this.request<ActressSearchResponse>('/ActressSearch', {...params});
+    return this.request<ActressSearchResponse>(DmmApiClient.ActressSearchEndpoint, {...params});
   }
 
   /**
@@ -189,7 +196,7 @@ export class DmmApiClient {
    * @returns {Promise<GenreSearchResponse>} Genre search results.
    */
   public async searchGenre(params: GenreSearchRequestParams): Promise<GenreSearchResponse> {
-    return this.request<GenreSearchResponse>('/GenreSearch', {...params});
+    return this.request<GenreSearchResponse>(DmmApiClient.GenreSearchEndpoint, {...params});
   }
 
   /**
@@ -198,7 +205,7 @@ export class DmmApiClient {
    * @returns {Promise<MakerSearchResponse>} Maker search results.
    */
   public async searchMaker(params: MakerSearchRequestParams): Promise<MakerSearchResponse> {
-    return this.request<MakerSearchResponse>('/MakerSearch', {...params});
+    return this.request<MakerSearchResponse>(DmmApiClient.MakerSearchEndpoint, {...params});
   }
 
   /**
@@ -207,7 +214,7 @@ export class DmmApiClient {
    * @returns {Promise<SeriesSearchResponse>} Series search results.
    */
   public async searchSeries(params: SeriesSearchRequestParams): Promise<SeriesSearchResponse> {
-    return this.request<SeriesSearchResponse>('/SeriesSearch', {...params});
+    return this.request<SeriesSearchResponse>(DmmApiClient.SeriesSearchEndpoint, {...params});
   }
 
   /**
@@ -216,7 +223,7 @@ export class DmmApiClient {
    * @returns {Promise<AuthorSearchResponse>} Author search results.
    */
   public async searchAuthor(params: AuthorSearchRequestParams): Promise<AuthorSearchResponse> {
-    return this.request<AuthorSearchResponse>('/AuthorSearch', {...params});
+    return this.request<AuthorSearchResponse>(DmmApiClient.AuthorSearchEndpoint, {...params});
   }
 
   /**

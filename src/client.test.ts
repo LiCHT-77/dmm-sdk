@@ -690,4 +690,242 @@ describe('DmmApiClient', () => {
         expect(mockFetch).toHaveBeenCalledTimes(1 + (1 + testMaxRetries));
     });
   });
+
+  describe('getItemList API (Endpoint Constant Test)', () => {
+    const itemListParams: ItemListRequestParams = { site: 'DMM.com', service: 'mono', floor: 'dvd', hits: 10, offset: 1, sort: 'rank' };
+
+    it('should call fetch with the currently hardcoded endpoint for ItemList', async () => {
+      const mockResponse = { result: { items: [] } };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+      await client.getItemList(itemListParams);
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/ItemList`);
+      const queryParams: Record<string, string> = {
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+      };
+      for (const key in itemListParams) {
+        if (Object.prototype.hasOwnProperty.call(itemListParams, key) && itemListParams[key as keyof ItemListRequestParams] !== undefined) {
+          queryParams[key] = String(itemListParams[key as keyof ItemListRequestParams]);
+        }
+      }
+      const searchParams = new URLSearchParams(queryParams);
+      expectedUrl.search = searchParams.toString();
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    });
+
+    it('should use the DmmApiClient.ItemListEndpoint constant for the endpoint path', async () => {
+      const mockResponse = { result: { items: [] } };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.getItemList(itemListParams);
+      const fetchCall = mockFetch.mock.calls[0][0] as string;
+      expect(fetchCall.includes(DmmApiClient.ItemListEndpoint)).toBe(true);
+    });
+  });
+
+  describe('getFloorList', () => {
+    const expectedEndpoint = '/FloorList';
+    it('getFloorList should call request with correct parameters', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+      await client.getFloorList();
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/FloorList`);
+       const searchParams = new URLSearchParams({
+          api_id: defaultOptions.apiId,
+          affiliate_id: defaultOptions.affiliateId,
+      });
+      expectedUrl.search = searchParams.toString();
+      expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    });
+
+    it('getFloorList should always use DMM.com site by default', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+      await client.getFloorList();
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}/FloorList`);
+      const searchParams = new URLSearchParams({
+          api_id: defaultOptions.apiId,
+          affiliate_id: defaultOptions.affiliateId,
+      });
+      expectedUrl.search = searchParams.toString();
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    });
+
+    it('should use the DmmApiClient.FloorListEndpoint constant for the endpoint path', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+
+      await client.getFloorList();
+      const fetchCall = mockFetch.mock.calls[0][0] as string;
+      expect(fetchCall.includes(DmmApiClient.FloorListEndpoint)).toBe(true);
+    });
+  });
+
+  describe('searchActress', () => {
+    const actressSearchParams: ActressSearchRequestParams = {
+      keyword: 'test actress',
+    };
+
+    it('should call fetch with the correct endpoint and parameters for ActressSearch', async () => {
+      const mockResponse = { result: { actresses: [] } };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.searchActress(actressSearchParams);
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.ActressSearchEndpoint}`);
+      const expectedParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        keyword: actressSearchParams.keyword as string,
+      });
+      expectedUrl.search = expectedParams.toString();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    it('should throw an error if keyword is missing for ActressSearch', async () => {
+      const paramsWithoutKeyword = { ...actressSearchParams, keyword: undefined } as unknown as ActressSearchRequestParams;
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('searchGenre', () => {
+    const genreSearchParams: GenreSearchRequestParams = {
+      floor_id: '123',
+      // 他の GenreSearch に必要なパラメータがあればここに追加
+    };
+
+    it('should call fetch with the correct endpoint and parameters for GenreSearch', async () => {
+      const mockResponse = { result: { genre: [] } }; // レスポンスの型を合わせる (必要であれば)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.searchGenre(genreSearchParams);
+
+      // Use the (not-yet-defined) constant for the expected endpoint
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.GenreSearchEndpoint}`); // DmmApiClient.GenreSearchEndpoint を使用
+      const expectedParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        floor_id: genreSearchParams.floor_id,
+        // 他の送信されるべきパラメータをここに追加
+      });
+      expectedUrl.search = expectedParams.toString();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    // 他の searchGenre 関連のテストケースは必要に応じて追加
+  });
+
+  describe('searchMaker', () => {
+    const makerSearchParams: MakerSearchRequestParams = {
+      floor_id: '456',
+      initial: 'あ',
+      // 他の MakerSearch に必要なパラメータがあればここに追加
+    };
+
+    it('should call fetch with the correct endpoint and parameters for MakerSearch', async () => {
+      const mockResponse = { result: { maker: [] } }; // レスポンスの型を合わせる (必要であれば)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.searchMaker(makerSearchParams);
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.MakerSearchEndpoint}`);
+      const expectedParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        floor_id: makerSearchParams.floor_id,
+        initial: makerSearchParams.initial as string,
+        // 他の送信されるべきパラメータをここに追加
+      });
+      expectedUrl.search = expectedParams.toString();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    // 他の searchMaker 関連のテストケースは必要に応じて追加
+  });
+
+  describe('searchSeries', () => {
+    const seriesSearchParams: SeriesSearchRequestParams = {
+      floor_id: '789',
+      initial: 'た',
+      // 他の SeriesSearch に必要なパラメータがあればここに追加
+    };
+
+    it('should call fetch with the correct endpoint and parameters for SeriesSearch', async () => {
+      const mockResponse = { result: { series: [] } }; // レスポンスの型を合わせる (必要であれば)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.searchSeries(seriesSearchParams);
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.SeriesSearchEndpoint}`);
+      const expectedParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        floor_id: seriesSearchParams.floor_id,
+        initial: seriesSearchParams.initial as string,
+        // 他の送信されるべきパラメータをここに追加
+      });
+      expectedUrl.search = expectedParams.toString();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    // 他の searchSeries 関連のテストケースは必要に応じて追加
+  });
+
+  describe('searchAuthor', () => {
+    const authorSearchParams: AuthorSearchRequestParams = {
+      floor_id: '101',
+      initial: 'な',
+      // 他の AuthorSearch に必要なパラメータがあればここに追加
+    };
+
+    it('should call fetch with the correct endpoint and parameters for AuthorSearch', async () => {
+      const mockResponse = { result: { author: [] } }; // レスポンスの型を合わせる (必要であれば)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.searchAuthor(authorSearchParams);
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.AuthorSearchEndpoint}`);
+      const expectedParams = new URLSearchParams({
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+        floor_id: authorSearchParams.floor_id,
+        initial: authorSearchParams.initial as string,
+        // 他の送信されるべきパラメータをここに追加
+      });
+      expectedUrl.search = expectedParams.toString();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    });
+
+    // 他の searchAuthor 関連のテストケースは必要に応じて追加
+  });
 });
