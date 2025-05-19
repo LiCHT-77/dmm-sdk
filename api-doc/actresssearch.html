@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="ja">
+
+<head></head>
+
+<body class="d-body-mg0">
+
+    <table id="w" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+            <td>
+                <div id="page">
+                    <div id="content">
+                        <div class="contents_top"><img
+                              src="https://p.dmm.co.jp/p/affiliate/web_service/contents_top.gif" width="730" height="4"
+                              alt=""></div>
+                        <div id="api-page">
+                            <div id="api-content">
+
+                                <div class="api-area">
+                                    <h2 class="api-capt01"><img
+                                          src="https://p.dmm.co.jp/p/affiliate/web_service/reference/gene_capt_act.gif"
+                                          width="550" height="29" alt="リファレンス<DMM.com 女優検索API>"></h2><!--/api-capt01-->
+                                    <p class="tx14">女優情報を取得することが可能なAPIです。</p>
+                                    <!--/api-area-->
+                                </div>
+
+                                <div class="api-area">
+                                    <!--/api-capt02-->
+                                    <p class="tx14 api-capt04"><img
+                                          src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10"
+                                          height="13" alt=""><span class="bold">リクエストURL</span></p>
+                                    <div class="request_url">
+                                        https://api.dmm.com/affiliate/v3/ActressSearch?api_id=[APIID]&amp;affiliate_id=[アフィリエイトID]&amp;keyword=%e3%81%82%e3%81%95%e3%81%bf&amp;gte_bust=90&amp;lte_waist=60&amp;sort=-bust&amp;hits=10&amp;offset=10&amp;output=json
+                                    </div>
+                                    <div style="color: red;">※APIID・アフィリエイトIDを入力する際には、前後の[ ]は不要です。</div>
+                                    <p class="tx14 api-capt04"><img
+                                          src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10"
+                                          height="13" alt=""><span class="bold">リクエストパラメータ</span></p>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="parameter-table">
+                                        <tr>
+                                            <th class="w95 hl" scope="col">論理名 </th>
+                                            <th class="w95 hl" scope="col">物理名</th>
+                                            <th class="w20 hl" scope="col">必須</th>
+                                            <th class="w95 hl" scope="col">値のサンプル</th>
+                                            <th class="w200 hl" scope="col">概要</th>
+                                        </tr>
+
+                                        <tr>
+                                            <td scope="row">APIID</td>
+                                            <td>api_id</td>
+                                            <td class="api_circle">○</td>
+                                            <td></td>
+                                            <td>登録時に割り振られたID</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">アフィリエイトID</td>
+                                            <td>affiliate_id</td>
+                                            <td class="api_circle">○</td>
+                                            <td>affiliate-990</td>
+                                            <td>登録時に割り振られた990～999までのアフィリエイトID</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">頭文字(50音)</td>
+                                            <td>initial</td>
+                                            <td class="api_circle"></td>
+                                            <td>あ</td>
+                                            <td>50音をUTF-8で指定</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">女優ID</td>
+                                            <td>actress_id</td>
+                                            <td class="api_circle"></td>
+                                            <td>15365</td>
+                                            <td>女優ID</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">キーワード</td>
+                                            <td>keyword</td>
+                                            <td class="api_circle"></td>
+                                            <td>あさみ</td>
+                                            <td>UTF-8で指定</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">バスト</td>
+                                            <td>gte_bust<br>lte_bust</td>
+                                            <td class="api_circle"></td>
+                                            <td>90</td>
+                                            <td>gte_bust=90ならバスト90cm以上、<br>
+                                                lte_bust=90ならバスト90cm以下<br>
+                                                gte_bust=90&amp;lte_bust=100なら<br>
+                                                バスト90cm以上～100cm以下</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">ウエスト</td>
+                                            <td>gte_waist<br>lte_waist</td>
+                                            <td class="api_circle"></td>
+                                            <td>60</td>
+                                            <td>同上</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">ヒップ</td>
+                                            <td>gte_hip<br>lte_hip</td>
+                                            <td class="api_circle"></td>
+                                            <td>90</td>
+                                            <td>同上</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">身長</td>
+                                            <td>gte_height<br>lte_height</td>
+                                            <td class="api_circle"></td>
+                                            <td>160</td>
+                                            <td>同上</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">生年月日</td>
+                                            <td>gte_birshday<br>lte_birthday</td>
+                                            <td class="api_circle"></td>
+                                            <td>1990-01-01</td>
+                                            <td>yyyymmddの形式で指定<br>
+                                                gte_birthday=1990-01-01なら1990年1月1日以降生まれ<br>
+                                                lte_birthday=1990-01-01なら1990年1月1日以前生まれ<br>
+                                                gte_birthday=1980-01-01&amp;lte_birthday=1989-12-31なら<br>
+                                                1980年1月1日生まれ～1989年12月31日生まれ</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">取得件数</td>
+                                            <td>hits</td>
+                                            <td class="api_circle"></td>
+                                            <td>20</td>
+                                            <td>初期値：20　最大：100</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">検索開始位置</td>
+                                            <td>offset</td>
+                                            <td class="api_circle"></td>
+                                            <td>1</td>
+                                            <td>初期値：1</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">ソート順</td>
+                                            <td>sort</td>
+                                            <td class="api_circle"></td>
+                                            <td>-name</td>
+                                            <td>名前昇順：name<br>
+                                                名前降順：-name<br>
+                                                バスト昇順：bust<br>
+                                                バスト降順：-bust<br>
+                                                ウエスト昇順：waist<br>
+                                                ウエスト降順：-waist<br>
+                                                ヒップ昇順：hip<br>
+                                                ヒップ降順：-hip<br>
+                                                身長昇順：height<br>
+                                                身長降順：-height<br>
+                                                生年月日昇順：birthday<br>
+                                                生年月日降順：-birthday<br>
+                                                女優ID昇順：id<br>
+                                                女優ID降順：-id</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">出力形式</td>
+                                            <td>output</td>
+                                            <td class="api_circle"></td>
+                                            <td>json</td>
+                                            <td>json / xml</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">コールバック</td>
+                                            <td>callback</td>
+                                            <td class="api_circle"></td>
+                                            <td>callback</td>
+                                            <td>出力形式jsonで指定した場合に、このパラメータでコールバック関数名を指定すると、JSONP形式で出力されます</td>
+                                        </tr>
+                                    </table>
+                                    <!--/api-area-->
+                                </div>
+
+                                <div class="api-area">
+                                    <!--/api-capt02-->
+                                    <p class="tx14 api-capt04"><img
+                                          src="https://p.dmm.co.jp/p/affiliate/web_service/ico_arrow01.gif" width="10"
+                                          height="13" alt=""><span class="bold">レスポンスフィールド</span></p>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="parameter-table">
+                                        <tr>
+                                            <th class="w160 hl" scope="col">フィールド</th>
+                                            <th class="w125 hl" scope="col">説明</th>
+                                            <th class="hl" scope="col">例</th>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">request</td>
+                                            <td> </td>
+                                            <td> </td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">parameters</td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">└ parameter</td>
+                                            <td>リクエストパラメータ</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　├ name</td>
+                                            <td>パラメータ名</td>
+                                            <td>keyword</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　└ value</td>
+                                            <td>値</td>
+                                            <td>あさみ</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">result</td>
+                                            <td> </td>
+                                            <td> </td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">├ status</td>
+                                            <td>ステータスコード</td>
+                                            <td>200</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">├ result_count</td>
+                                            <td>取得件数</td>
+                                            <td>20</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">├ total_count</td>
+                                            <td>全体件数</td>
+                                            <td>64964</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">├ first_position</td>
+                                            <td>検索開始位置</td>
+                                            <td>1</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">└ actress</td>
+                                            <td>女優情報</td>
+                                            <td> </td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ id</td>
+                                            <td>女優ID</td>
+                                            <td>15365</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ name</td>
+                                            <td>女優名</td>
+                                            <td>麻美ゆま</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ ruby</td>
+                                            <td>女優名（読み仮名）</td>
+                                            <td>あさみゆま</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ bust</td>
+                                            <td>バスト</td>
+                                            <td>96</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ cup</td>
+                                            <td>カップ数</td>
+                                            <td>H</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ waist</td>
+                                            <td>ウェスト</td>
+                                            <td>58</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ hip</td>
+                                            <td>ヒップ</td>
+                                            <td>88</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ height</td>
+                                            <td>身長</td>
+                                            <td>158</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ birthday</td>
+                                            <td>生年月日</td>
+                                            <td>1987-03-24</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ blood_type</td>
+                                            <td>血液型</td>
+                                            <td>AB</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ hobby</td>
+                                            <td>趣味</td>
+                                            <td>香水集め、英会話、ピアノ</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ prefectures</td>
+                                            <td>出身地</td>
+                                            <td>東京都</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　├ imageURL</td>
+                                            <td>画像URL</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　├ small</td>
+                                            <td>画像（小）</td>
+                                            <td>http://pics.dmm.co.jp/mono/actjpgs/thumbnail/asami_yuma.jpg</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　└ large</td>
+                                            <td>画像（大）</td>
+                                            <td>http://pics.dmm.co.jp/mono/actjpgs/asami_yuma.jpg</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　└ listURL</td>
+                                            <td>リストページURL(アフィリエイトID付き)</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　├ digital</td>
+                                            <td>動画</td>
+                                            <td>https://al.dmm.co.jp/?lurl=http%3A%2F%2Fwww.dmm.co.jp%2Fdigital%2Fvideoa%2F-%2Flist%2F%3D%2Farticle%3Dactress%2Fid%3D15365%2F&amp;af_id=affiliate-001&amp;ch=api
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　├ monthly_premium</td>
+                                            <td>月額動画 見放題chデラックス</td>
+                                            <td>https://al.dmm.co.jp/?lurl=http%3A%2F%2Fwww.dmm.co.jp%2Fmonthly%2Fpremium%2F-%2Flist%2F%3D%2Farticle%3Dactress%2Fid%3D15365%2F&amp;af_id=affiliate-001&amp;ch=api
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="row">　　└ mono</td>
+                                            <td>DVD通販</td>
+                                            <td>https://al.dmm.co.jp/?lurl=http%3A%2F%2Fwww.dmm.co.jp%2Fmono%2Fdvd%2F-%2Flist%2F%3D%2Farticle%3Dactress%2Fid%3D15365%2F&amp;af_id=affiliate-001&amp;ch=api
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

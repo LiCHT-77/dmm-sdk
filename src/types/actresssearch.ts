@@ -86,27 +86,21 @@ export interface Actress {
     /** 大 */
     large: string;
   };
-  /** 女優ページURL */
+  /** 女優ページURL (アフィリエイトID付き) */
   listURL?: {
-    /** PC */
-    digital: string; // ドキュメントは digital だが、実際は pc かもしれない
-    /** スマホ */
-    monthly: string; // ドキュメントは monthly だが、実際は sp かもしれない
+    /** 動画 */
+    digital: string;
+    /** 月額動画 見放題chデラックス */
+    monthly_premium: string;
+    /** DVD通販 */
     mono?: string;
-    rental?: string;
   };
-  // 他にもフィールドが存在する可能性あり
-  [key: string]: any;
 }
 
 /**
  * 女優検索API (ActressSearch) のレスポンス
  */
 export interface ActressSearchResponse {
-  /** リクエストパラメータ */
-  request: {
-    parameters: ActressSearchRequestParams;
-  };
   /** 総件数 */
   result_count: number;
   /** 取得件数 */
