@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "vitest run",
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "prepare": "npm run build"
   },
@@ -33,10 +33,13 @@
   },
   "homepage": "https://github.com/LiCHT-77/dmm-sdk#readme",
   "devDependencies": {
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.3.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.3"
   }
 }

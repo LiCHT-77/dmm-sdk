@@ -1,39 +1,66 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { DmmApiHelperClient } from './helperClient';
-import { DmmApiClient } from './client';
+import { DmmApiClient, type DmmApiClientOptions } from './client';
 import type { Item, ItemListResponse } from './types';
 
-// DmmApiClientをモック化
-jest.mock('./client');
+// DmmApiClient のモックインスタンスを保持するための変数
+let mockDmmApiClientInstance: {
+  getItemList: ReturnType<typeof vi.fn>;
+  // 他の DmmApiClient のメソッドのモックも必要に応じてここに追加
+};
 
-const MockDmmApiClient = DmmApiClient as jest.MockedClass<typeof DmmApiClient>;
+vi.mock('./client', async (importOriginal) => {
+  const actual = await importOriginal() as typeof import('./client');
+  const MockDmmApiClientConstructor = vi.fn();
+  const mockGetItemList = vi.fn();
+  // 他のメソッドのモックも必要に応じてここに追加
+
+  MockDmmApiClientConstructor.mockImplementation((_options: DmmApiClientOptions) => {
+    mockDmmApiClientInstance = {
+      getItemList: mockGetItemList,
+      // 他のモックメソッド
+    } as any; // DmmApiClientの完全なモックではないためanyでキャスト
+    return mockDmmApiClientInstance;
+  });
+
+  return {
+    ...actual, // 元のモジュールの他のエクスポートを維持
+    DmmApiClient: MockDmmApiClientConstructor,
+  };
+});
+
+// モックされたDmmApiClientのコンストラクタを取得
+const MockedDmmApiClientConstructor = DmmApiClient as unknown as ReturnType<typeof vi.fn>;
+
 
 describe('DmmApiHelperClient', () => {
   let enhancedClient: DmmApiHelperClient;
-  let mockRawClient: jest.Mocked<DmmApiClient>;
+  // モックインスタンスをテスト内で参照するための変数
+  let capturedMockRawClient: typeof mockDmmApiClientInstance;
 
-  const mockOptions = {
+  const mockOptions: DmmApiClientOptions = {
     apiId: 'test-api-id',
     affiliateId: 'test-affiliate-id',
   };
 
   beforeEach(() => {
-    // 各テストの前にモックをリセット
-    MockDmmApiClient.mockClear();
+    // モックをクリア
+    MockedDmmApiClientConstructor.mockClear();
+    // オプショナルチェーンを使用
+    mockDmmApiClientInstance?.getItemList?.mockClear();
+    // 他のモックメソッドもクリア
 
     enhancedClient = new DmmApiHelperClient(mockOptions);
-    // モックされた DmmApiClient のインスタンスを取得
-    // DmmApiHelperClient のコンストラクタ内で new DmmApiClient が呼ばれるため、
-    // mock.instances[0] でアクセスできる
-    mockRawClient = MockDmmApiClient.mock.instances[0] as jest.Mocked<DmmApiClient>;
+    capturedMockRawClient = mockDmmApiClientInstance;
   });
 
   it('should instantiate DmmApiClient with correct options', () => {
-    expect(MockDmmApiClient).toHaveBeenCalledTimes(1);
-    expect(MockDmmApiClient).toHaveBeenCalledWith(mockOptions);
+    expect(MockedDmmApiClientConstructor).toHaveBeenCalledTimes(1);
+    expect(MockedDmmApiClientConstructor).toHaveBeenCalledWith(mockOptions);
   });
 
   it('should return the raw DmmApiClient instance', () => {
-    expect(enhancedClient.api()).toBe(mockRawClient);
+    expect(enhancedClient.api()).toBe(capturedMockRawClient);
   });
 
   describe('getItemById', () => {
@@ -50,7 +77,17 @@ describe('DmmApiHelperClient', () => {
       URL: `https://example.com/product/${testCid}/`,
       affiliateURL: `https://affiliate.example.com/?cid=${testCid}`,
       date: '2024-01-01 00:00:00',
-      // 他の必須またはテストに必要なフィールドを追加
+      imageURL: { small: 'small.jpg', list: 'list.jpg', large: 'large.jpg' },
+      sampleImageURL: { sample_s: { image: ['s1.jpg'] } },
+      iteminfo: {
+        maker: [{ id: 1, name: 'Test Maker' }],
+        actress: [{ id: 1, name: 'Test Actress' }],
+        director: [{ id: 1, name: 'Test Director' }],
+        series: [{ id: 1, name: 'Test Series' }],
+        label: [{ id: 1, name: 'Test Label' }],
+        genre: [{ id: 1, name: 'Test Genre' }]
+        // 他に iteminfo に必要なプロパティがあればここに追加
+      }
     };
 
     it('should call getItemList with correct parameters and return the item', async () => {
@@ -60,13 +97,12 @@ describe('DmmApiHelperClient', () => {
         first_position: 1,
         items: [mockItem],
       };
-      // getItemListが特定のレスポンスを返すようにモックを設定
-      mockRawClient.getItemList.mockResolvedValue(mockResponse);
+      capturedMockRawClient.getItemList.mockResolvedValue(mockResponse);
 
       const item = await enhancedClient.getItemById(testCid);
 
-      expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
-      expect(mockRawClient.getItemList).toHaveBeenCalledWith({
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledTimes(1);
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledWith({
         cid: testCid,
         hits: 1,
         offset: 1,
@@ -81,13 +117,13 @@ describe('DmmApiHelperClient', () => {
           first_position: 1,
           items: [mockItem],
         };
-        mockRawClient.getItemList.mockResolvedValue(mockResponse);
+        capturedMockRawClient.getItemList.mockResolvedValue(mockResponse);
 
-        const options = { site: 'FANZA' as const, service: 'digital' };
+        const options = { site: 'FANZA' as const, service: 'digital' as const };
         await enhancedClient.getItemById(testCid, options);
 
-        expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
-        expect(mockRawClient.getItemList).toHaveBeenCalledWith({
+        expect(capturedMockRawClient.getItemList).toHaveBeenCalledTimes(1);
+        expect(capturedMockRawClient.getItemList).toHaveBeenCalledWith({
           ...options,
           cid: testCid,
           hits: 1,
@@ -100,15 +136,15 @@ describe('DmmApiHelperClient', () => {
       const mockResponse: ItemListResponse = {
         result_count: 0,
         total_count: 0,
-        first_position: 0, // 0件の場合は0になることが多い
-        items: [], // 空の配列
+        first_position: 0,
+        items: [],
       };
-      mockRawClient.getItemList.mockResolvedValue(mockResponse);
+      capturedMockRawClient.getItemList.mockResolvedValue(mockResponse);
 
       const item = await enhancedClient.getItemById(testCid);
 
-      expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
-      expect(mockRawClient.getItemList).toHaveBeenCalledWith({
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledTimes(1);
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledWith({
         cid: testCid,
         hits: 1,
         offset: 1,
@@ -118,13 +154,12 @@ describe('DmmApiHelperClient', () => {
 
     it('should throw an error if getItemList throws an error', async () => {
       const testError = new Error('API Error');
-      mockRawClient.getItemList.mockRejectedValue(testError);
+      capturedMockRawClient.getItemList.mockRejectedValue(testError);
 
-      // getItemById が testError をスローすることを期待する
       await expect(enhancedClient.getItemById(testCid)).rejects.toThrow(testError);
 
-      expect(mockRawClient.getItemList).toHaveBeenCalledTimes(1);
-      expect(mockRawClient.getItemList).toHaveBeenCalledWith({
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledTimes(1);
+      expect(capturedMockRawClient.getItemList).toHaveBeenCalledWith({
         cid: testCid,
         hits: 1,
         offset: 1,

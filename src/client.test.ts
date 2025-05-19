@@ -1,4 +1,5 @@
 // src/client.test.ts
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DmmApiClient, type DmmApiClientOptions } from './client';
 import type {
   ItemListRequestParams,
@@ -10,8 +11,8 @@ import type {
   AuthorSearchRequestParams,
 } from './types';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
 
 describe('DmmApiClient', () => {
   const defaultOptions: DmmApiClientOptions = {
@@ -40,7 +41,7 @@ describe('DmmApiClient', () => {
   });
 
   afterEach(() => {
-    // jest.clearAllTimers();
+    // vi.clearAllTimers(); // Vitestでは通常不要か、vi.useRealTimers()などで制御
   });
 
   it('should throw an error if apiId is missing', () => {
@@ -177,7 +178,7 @@ describe('DmmApiClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    it('should retry and throw an error if response is not ok and body is not json (retryable status)', async () => {
+    it('should retry and throw an error if response is not ok and body is not json (retryable status)', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
         const errorStatus = 500;
         const errorText = 'Internal Server Error';
         mockFetch.mockResolvedValue({
@@ -202,9 +203,9 @@ describe('DmmApiClient', () => {
 
         const expectedCalls = 1 + testMaxRetries;
         expect(mockFetch).toHaveBeenCalledTimes(expectedCalls);
-    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
+    });
 
-    it('should retry on network error', async () => {
+    it('should retry on network error', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
       const networkError = new TypeError('Failed to fetch');
       mockFetch.mockRejectedValue(networkError);
 
@@ -220,9 +221,9 @@ describe('DmmApiClient', () => {
 
       const expectedNetworkErrorCalls = 1 + testMaxRetries;
       expect(mockFetch).toHaveBeenCalledTimes(expectedNetworkErrorCalls);
-    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
+    });
 
-     it('should retry on 429 Too Many Requests', async () => {
+     it('should retry on 429 Too Many Requests', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
         const errorStatus = 429;
         const errorResponse = { result: { message: 'Too Many Requests' } };
         mockFetch.mockResolvedValue({
@@ -245,9 +246,9 @@ describe('DmmApiClient', () => {
         }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
-    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
+    });
 
-     it('should retry on 5xx Server Error', async () => {
+     it('should retry on 5xx Server Error', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
         const errorStatus = 503;
         const errorResponse = { result: { message: 'Service Unavailable' } };
          mockFetch.mockResolvedValue({
@@ -270,9 +271,9 @@ describe('DmmApiClient', () => {
         }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
-    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
+    });
 
-     it('should timeout if fetch takes too long', async () => {
+     it('should timeout if fetch takes too long', { timeout: testTimeout + 1000 }, async () => {
         mockFetch.mockImplementation(async (_url, options) => {
             const signal = options?.signal;
             await new Promise<void>((_resolve, reject) => {
@@ -290,9 +291,9 @@ describe('DmmApiClient', () => {
             .rejects
             .toThrow(`API request to ${endpoint} timed out after ${testTimeout}ms`);
         expect(mockFetch).toHaveBeenCalledTimes(1);
-    }, testTimeout + 1000);
+    });
 
-     it('should not timeout if fetch responds within time', async () => {
+     it('should not timeout if fetch responds within time', { timeout: testTimeout + 1000 }, async () => {
         const mockResult = { data: 'fast data' };
         mockFetch.mockImplementation(() =>
             new Promise(resolve => setTimeout(() => resolve({
@@ -302,7 +303,7 @@ describe('DmmApiClient', () => {
 
         await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)).resolves.toEqual(mockResult);
         expect(mockFetch).toHaveBeenCalledTimes(1);
-    }, testTimeout + 1000);
+    });
 
 
     it('should throw an error if response format is invalid (missing result)', async () => {
@@ -504,7 +505,7 @@ describe('DmmApiClient', () => {
     };
     const hitsPerPage = 100;
 
-    it('should yield all items from multiple pages', async () => {
+    it('should yield all items from multiple pages', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
       const totalItems = 250;
       const page1Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `item_${i + 1}` }));
       const page2Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `item_${i + 101}` }));
@@ -687,6 +688,6 @@ describe('DmmApiClient', () => {
         }
 
         expect(mockFetch).toHaveBeenCalledTimes(1 + (1 + testMaxRetries));
-    }, testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000);
+    });
   });
 });
