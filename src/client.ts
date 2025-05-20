@@ -71,6 +71,21 @@ export class DmmApiClient {
     this.maxRetries = options.maxRetries ?? DmmApiClient.DefaultMaxRetries;
     this.retryDelay = options.retryDelay ?? DmmApiClient.DefaultRetryDelay;
 
+    if (options.baseUrl !== undefined) {
+      if (typeof options.baseUrl !== 'string' || options.baseUrl.trim() === '') {
+        throw new Error('Invalid baseUrl: must be a valid URL string or undefined.');
+      }
+      try {
+        const url = new URL(options.baseUrl);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+          throw new Error('Invalid baseUrl: protocol must be http or https.');
+        }
+      } catch (e) {
+        // URL constructor throws TypeError for invalid URLs
+        throw new Error('Invalid baseUrl: must be a valid URL string or undefined.');
+      }
+    }
+
     let tempBaseUrl = options.baseUrl ?? 'https://api.dmm.com/affiliate/v3';
     if (tempBaseUrl.endsWith('/')) {
       tempBaseUrl = tempBaseUrl.slice(0, -1);

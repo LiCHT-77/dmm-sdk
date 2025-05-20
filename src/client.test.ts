@@ -116,6 +116,28 @@ describe('DmmApiClient', () => {
     });
   });
 
+  describe('baseUrl validation', () => {
+    it('should throw an error if baseUrl is an empty string', () => {
+      expect(() => new DmmApiClient({ ...defaultOptions, baseUrl: '' }))
+        .toThrow('Invalid baseUrl: must be a valid URL string or undefined.');
+    });
+
+    it('should throw an error if baseUrl is an invalid URL', () => {
+      expect(() => new DmmApiClient({ ...defaultOptions, baseUrl: 'invalid-url' }))
+        .toThrow('Invalid baseUrl: must be a valid URL string or undefined.');
+    });
+
+    it('should throw an error if baseUrl is a URL with an unsupported protocol', () => {
+      expect(() => new DmmApiClient({ ...defaultOptions, baseUrl: 'ftp://example.com' }))
+        .toThrow('Invalid baseUrl: must be a valid URL string or undefined.');
+    });
+
+    it('should not throw an error for valid http or https URLs', () => {
+      expect(() => new DmmApiClient({ ...defaultOptions, baseUrl: 'http://example.com' })).not.toThrow();
+      expect(() => new DmmApiClient({ ...defaultOptions, baseUrl: 'https://secure.example.com/api/v2' })).not.toThrow();
+    });
+  });
+
   it('should throw an error if apiId is missing', () => {
     expect(() => new DmmApiClient({ affiliateId: 'test' } as DmmApiClientOptions))
       .toThrow('API ID and Affiliate ID are required.');
