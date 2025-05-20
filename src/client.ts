@@ -45,6 +45,9 @@ export class DmmApiClient {
   public static readonly SeriesSearchEndpoint = '/SeriesSearch';
   public static readonly AuthorSearchEndpoint = '/AuthorSearch';
   public static readonly DefaultHitsPerPageForGetAllItems = 100;
+  public static readonly DefaultTimeout = 10000;
+  public static readonly DefaultMaxRetries = 3;
+  public static readonly DefaultRetryDelay = 1000;
   private readonly apiId: string;
   private readonly affiliateId: string;
   private readonly timeout: number;
@@ -62,9 +65,9 @@ export class DmmApiClient {
     }
     this.apiId = options.apiId;
     this.affiliateId = options.affiliateId;
-    this.timeout = options.timeout || 10000;
-    this.maxRetries = options.maxRetries ?? 3;
-    this.retryDelay = options.retryDelay || 1000;
+    this.timeout = options.timeout ?? DmmApiClient.DefaultTimeout;
+    this.maxRetries = options.maxRetries ?? DmmApiClient.DefaultMaxRetries;
+    this.retryDelay = options.retryDelay ?? DmmApiClient.DefaultRetryDelay;
   }
 
   /**

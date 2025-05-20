@@ -19,9 +19,9 @@ describe('DmmApiClient', () => {
     apiId: 'test-api-id',
     affiliateId: 'test-affiliate-id',
   };
-  const clientDefaultMaxRetries = 3;
-  const clientDefaultRetryDelay = 1000;
-  const clientDefaultTimeout = 10000;
+  const clientDefaultMaxRetries = DmmApiClient.DefaultMaxRetries;
+  const clientDefaultRetryDelay = DmmApiClient.DefaultRetryDelay;
+  const clientDefaultTimeout = DmmApiClient.DefaultTimeout;
 
   const testRetryDelay = 50;
   const testTimeout = 500;
