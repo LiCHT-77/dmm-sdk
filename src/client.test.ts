@@ -14,6 +14,23 @@ import type {
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
+describe('DmmApiClientOptions type', () => {
+  it('should allow baseUrl to be an optional string', () => {
+    const optionsWithBaseUrl: DmmApiClientOptions = {
+      apiId: 'test-api-id',
+      affiliateId: 'test-affiliate-id',
+      baseUrl: 'https://example.com',
+    };
+    expect(optionsWithBaseUrl.baseUrl).toBe('https://example.com');
+
+    const optionsWithoutBaseUrl: DmmApiClientOptions = {
+      apiId: 'test-api-id',
+      affiliateId: 'test-affiliate-id',
+    };
+    expect(optionsWithoutBaseUrl.baseUrl).toBeUndefined();
+  });
+});
+
 describe('DmmApiClient', () => {
   const defaultOptions: DmmApiClientOptions = {
     apiId: 'test-api-id',
@@ -42,6 +59,61 @@ describe('DmmApiClient', () => {
 
   afterEach(() => {
     // vi.clearAllTimers(); // Vitestでは通常不要か、vi.useRealTimers()などで制御
+  });
+
+  describe('baseUrl handling', () => {
+    const defaultApiBaseUrl = 'https://api.dmm.com/affiliate/v3';
+
+    it('should use the default baseUrl if none is provided', async () => {
+      const clientWithDefaultBaseUrl = new DmmApiClient(defaultOptions);
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+      await clientWithDefaultBaseUrl.getFloorList();
+
+      const urlInstance = new URL(mockFetch.mock.calls[0][0] as string);
+      expect(urlInstance.origin + urlInstance.pathname).toBe(`${defaultApiBaseUrl}/FloorList`);
+    });
+
+    it('should use the provided baseUrl if specified', async () => {
+      const customBaseUrl = 'https://custom.example.com/api';
+      const clientWithCustomBaseUrl = new DmmApiClient({
+        ...defaultOptions,
+        baseUrl: customBaseUrl,
+      });
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+      await clientWithCustomBaseUrl.getFloorList();
+
+      const urlInstance = new URL(mockFetch.mock.calls[0][0] as string);
+      expect(urlInstance.origin + urlInstance.pathname).toBe(`${customBaseUrl}/FloorList`);
+    });
+
+    it('should correctly handle baseUrl with a trailing slash', async () => {
+        const customBaseUrlWithSlash = 'https://custom.example.com/api/';
+        const clientWithCustomBaseUrl = new DmmApiClient({
+            ...defaultOptions,
+            baseUrl: customBaseUrlWithSlash,
+        });
+        mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+        await clientWithCustomBaseUrl.getFloorList();
+
+        const urlInstance = new URL(mockFetch.mock.calls[0][0] as string);
+        // APIエンドポイントの前にスラッシュが2重にならないことを期待
+        expect(urlInstance.origin + urlInstance.pathname).toBe(`${customBaseUrlWithSlash.slice(0, -1)}/FloorList`);
+    });
+
+    it('should correctly handle baseUrl without a trailing slash and endpoint without leading slash', async () => {
+        const customBaseUrl = 'https://custom.example.com/api';
+        // DmmApiClientの内部でエンドポイントの先頭に `/` が付与されることを想定
+        const clientWithCustomBaseUrl = new DmmApiClient({
+            ...defaultOptions,
+            baseUrl: customBaseUrl,
+        });
+        mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+        // getFloorListは内部で 'FloorList' (先頭スラッシュなし) を使うと仮定
+        await clientWithCustomBaseUrl.getFloorList();
+
+        const urlInstance = new URL(mockFetch.mock.calls[0][0] as string);
+        expect(urlInstance.origin + urlInstance.pathname).toBe(`${customBaseUrl}/FloorList`);
+    });
   });
 
   it('should throw an error if apiId is missing', () => {

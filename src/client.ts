@@ -30,13 +30,15 @@ export interface DmmApiClientOptions {
   maxRetries?: number;
   /** Initial retry delay in milliseconds (default: 1000) */
   retryDelay?: number;
+  /** Base URL for the API (optional) */
+  baseUrl?: string;
 }
 
 /**
  * DMM Affiliate API v3 Client.
  */
 export class DmmApiClient {
-  private readonly baseUrl = 'https://api.dmm.com/affiliate/v3';
+  private readonly baseUrl: string;
   public static readonly ItemListEndpoint = '/ItemList';
   public static readonly FloorListEndpoint = '/FloorList';
   public static readonly ActressSearchEndpoint = '/ActressSearch';
@@ -68,6 +70,12 @@ export class DmmApiClient {
     this.timeout = options.timeout ?? DmmApiClient.DefaultTimeout;
     this.maxRetries = options.maxRetries ?? DmmApiClient.DefaultMaxRetries;
     this.retryDelay = options.retryDelay ?? DmmApiClient.DefaultRetryDelay;
+
+    let tempBaseUrl = options.baseUrl ?? 'https://api.dmm.com/affiliate/v3';
+    if (tempBaseUrl.endsWith('/')) {
+      tempBaseUrl = tempBaseUrl.slice(0, -1);
+    }
+    this.baseUrl = tempBaseUrl;
   }
 
   /**
