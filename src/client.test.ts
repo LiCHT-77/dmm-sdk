@@ -114,6 +114,49 @@ describe('DmmApiClient', () => {
         const urlInstance = new URL(mockFetch.mock.calls[0][0] as string);
         expect(urlInstance.origin + urlInstance.pathname).toBe(`${customBaseUrl}/FloorList`);
     });
+
+    describe('Backward compatibility and testability', () => {
+      it('should work correctly with existing DmmApiClientOptions (without baseUrl)', async () => {
+        const clientWithoutBaseUrl = new DmmApiClient(defaultOptions);
+        mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: {} }) });
+        await clientWithoutBaseUrl.getFloorList();
+
+        const urlCall = mockFetch.mock.calls[0][0] as string;
+        const urlInstance = new URL(urlCall);
+        expect(urlInstance.origin + urlInstance.pathname).toBe(`${defaultApiBaseUrl}/FloorList`);
+        expect(urlCall).toContain(`api_id=${defaultOptions.apiId}`);
+        expect(urlCall).toContain(`affiliate_id=${defaultOptions.affiliateId}`);
+      });
+
+      it('should use the overridden baseUrl for all API methods when testing', async () => {
+        const testBaseUrl = 'https://test-double.example.com/v1';
+        const testClient = new DmmApiClient({
+          ...defaultOptions,
+          baseUrl: testBaseUrl,
+        });
+
+        const methodsToTest: { method: keyof DmmApiClient, params?: unknown, endpoint: string }[] = [
+          { method: 'getItemList', params: { site: 'DMM.com', service: 'digital', floor: 'videoa', hits: 1, sort: 'rank' } as ItemListRequestParams, endpoint: 'ItemList' },
+          { method: 'getFloorList', params: undefined, endpoint: 'FloorList' },
+          { method: 'searchActress', params: { initial: 'a', hits: 1 } as ActressSearchRequestParams, endpoint: 'ActressSearch' },
+          { method: 'searchGenre', params: { floor_id: '123', initial: 'あ', hits: 1 } as GenreSearchRequestParams, endpoint: 'GenreSearch' },
+          { method: 'searchMaker', params: { floor_id: '456', initial: 'm', hits: 1 } as MakerSearchRequestParams, endpoint: 'MakerSearch' },
+          { method: 'searchSeries', params: { floor_id: '789', initial: 's', hits: 1 } as SeriesSearchRequestParams, endpoint: 'SeriesSearch' },
+          { method: 'searchAuthor', params: { floor_id: '101', initial: 'k', hits: 1 } as AuthorSearchRequestParams, endpoint: 'AuthorSearch' },
+        ];
+
+        for (const { method, params, endpoint } of methodsToTest) {
+          mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: { status: 200 } }) });
+          await (testClient[method] as (params: unknown) => Promise<unknown>)(params);
+
+          const urlCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0] as string;
+          const urlInstance = new URL(urlCall);
+          expect(urlInstance.origin + urlInstance.pathname).toBe(`${testBaseUrl}/${endpoint}`);
+          expect(urlCall).toContain(`api_id=${defaultOptions.apiId}`);
+          expect(urlCall).toContain(`affiliate_id=${defaultOptions.affiliateId}`);
+        }
+      });
+    });
   });
 
   describe('baseUrl validation', () => {
