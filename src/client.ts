@@ -24,8 +24,6 @@ export interface DmmApiClientOptions {
   apiId: string;
   /** Affiliate ID */
   affiliateId: string;
-  /** Request timeout in milliseconds (default: 10000) */
-  timeout?: number;
   /** Base URL for the API (optional) */
   baseUrl?: string;
 }
@@ -43,10 +41,8 @@ export class DmmApiClient {
   public static readonly SeriesSearchEndpoint = '/SeriesSearch';
   public static readonly AuthorSearchEndpoint = '/AuthorSearch';
   public static readonly DefaultHitsPerPageForGetAllItems = 100;
-  public static readonly DefaultTimeout = 10000;
   private readonly apiId: string;
   private readonly affiliateId: string;
-  private readonly timeout: number;
 
   /**
    * Creates an instance of DmmApiClient.
@@ -59,7 +55,6 @@ export class DmmApiClient {
     }
     this.apiId = options.apiId;
     this.affiliateId = options.affiliateId;
-    this.timeout = options.timeout ?? DmmApiClient.DefaultTimeout;
 
     if (options.baseUrl !== undefined) {
       if (typeof options.baseUrl !== 'string' || options.baseUrl.trim() === '') {
@@ -107,12 +102,8 @@ export class DmmApiClient {
     const searchParams = new URLSearchParams(queryParams);
     url.search = searchParams.toString();
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
     try {
-      const response = await fetch(url.toString(), { signal: controller.signal });
-      clearTimeout(timeoutId);
+      const response = await fetch(url.toString());
 
       if (response.ok) {
         const data = await response.json();
@@ -128,27 +119,6 @@ export class DmmApiClient {
       throw new Error(`API request to ${endpoint} failed with status ${response.status}: ${errorMessage}`);
 
     } catch (error: unknown) {
-      clearTimeout(timeoutId);
-
-      let isTimeoutError = false;
-
-      if (error && typeof error === 'object') {
-        const err = error as { name?: string; message?: string };
-        if (err.name === 'AbortError') {
-          isTimeoutError = true;
-        } else if (
-          err.message &&
-          (err.message.toLowerCase().includes('aborted') ||
-            err.message.includes('The operation was aborted'))
-        ) {
-          isTimeoutError = true;
-        }
-      }
-
-      if (isTimeoutError) {
-        throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
-      }
-
       // Non-retryable error or max retries exceeded
       // HTTP error responses (including JSON parse failures) are handled above
       const originalErrorMessage = error instanceof Error ? error.message : String(error);

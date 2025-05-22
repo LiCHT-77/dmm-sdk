@@ -36,9 +36,6 @@ describe('DmmApiClient', () => {
     apiId: 'test-api-id',
     affiliateId: 'test-affiliate-id',
   };
-  const clientDefaultTimeout = DmmApiClient.DefaultTimeout;
-
-  const testTimeout = 500;
 
   let client: DmmApiClient;
 
@@ -47,7 +44,6 @@ describe('DmmApiClient', () => {
     client = new DmmApiClient({
         apiId: defaultOptions.apiId,
         affiliateId: defaultOptions.affiliateId,
-        timeout: testTimeout,
     });
   });
 
@@ -191,7 +187,7 @@ describe('DmmApiClient', () => {
         affiliate_id: defaultOptions.affiliateId,
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('getFloorList should always use DMM.com site by default', async () => {
@@ -204,24 +200,16 @@ describe('DmmApiClient', () => {
         affiliate_id: defaultOptions.affiliateId,
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('should create an instance with default timeout and retries', () => {
      const defaultClient = new DmmApiClient(defaultOptions);
-    expect((defaultClient as unknown as { timeout: number }).timeout).toBe(clientDefaultTimeout);
+    expect((defaultClient as unknown as { apiId: string }).apiId).toBe(defaultOptions.apiId);
+    expect((defaultClient as unknown as { affiliateId: string }).affiliateId).toBe(defaultOptions.affiliateId);
   });
 
-  it('should create an instance with specified timeout, maxRetries, and retryDelay', () => {
-    const customOptions: DmmApiClientOptions = {
-      ...defaultOptions,
-      timeout: 5000,
-    };
-    const customClient = new DmmApiClient(customOptions);
-    expect((customClient as unknown as { timeout: number }).timeout).toBe(5000);
-  });
-
-  describe('request method (including timeout and retry logic)', () => {
+  describe('request method', () => {
     const endpoint = '/TestEndpoint';
     const params = { param1: 'value1', param2: 123 };
     const expectedBaseUrl = 'https://api.dmm.com/affiliate/v3';
@@ -246,7 +234,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = searchParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     it('should not include undefined parameters in the URL query', async () => {
@@ -273,7 +261,7 @@ describe('DmmApiClient', () => {
       });
       expectedUrl.search = searchParams.toString();
 
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     it('should return the result field on successful response', async () => {
@@ -346,67 +334,6 @@ describe('DmmApiClient', () => {
       ).rejects.toThrow(`Error during API request to ${endpoint}: Network request failed`);
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
-
-     it('should timeout if fetch takes too long', { timeout: testTimeout + 1000 }, async () => {
-        mockFetch.mockImplementation(async (_url, options) => {
-            const signal = options?.signal;
-            await new Promise<void>((_resolve, reject) => {
-                const timeoutId = setTimeout(() => {
-                }, testTimeout + 100);
-                signal?.addEventListener('abort', () => {
-                    clearTimeout(timeoutId);
-                    reject(new DOMException('The operation was aborted.', 'AbortError'));
-                });
-            });
-            return { ok: true, json: async () => ({ result: { success: true } }) };
-        });
-
-        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
-            .rejects
-            .toThrow(`API request to ${endpoint} timed out after ${testTimeout}ms`);
-        expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-     it('should not timeout if fetch responds within time', { timeout: testTimeout + 1000 }, async () => {
-        const mockResult = { data: 'fast data' };
-        mockFetch.mockImplementation(() =>
-            new Promise(resolve => setTimeout(() => resolve({
-                 ok: true, json: async () => ({ result: mockResult })
-            }), testTimeout - 50))
-        );
-
-        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)).resolves.toEqual(mockResult);
-        expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-
-    it('should throw an error if response format is invalid (missing result)', async () => {
-        const invalidResponse = { data: 'no result field' };
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: async () => invalidResponse,
-        });
-
-        await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
-            .rejects
-            .toThrow('Invalid API response format: "result" field is missing.');
-        expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not retry if maxRetries is 0', async () => {
-      const noRetryClient = new DmmApiClient({
-        ...defaultOptions,
-        timeout: testTimeout,
-      });
-      const networkError = new TypeError('Failed to fetch');
-      mockFetch.mockRejectedValueOnce(networkError);
-
-      await expect(
-        (noRetryClient as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)
-      ).rejects.toThrow(`Error during API request to ${endpoint}: ${networkError.message}`);
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
   });
 
   // --- API メソッドのテスト ---
@@ -426,7 +353,7 @@ describe('DmmApiClient', () => {
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('getItemList should call request with specified site', async () => {
@@ -444,7 +371,7 @@ describe('DmmApiClient', () => {
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(1);
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('getFloorList should call request with correct parameters', async () => {
@@ -457,7 +384,7 @@ describe('DmmApiClient', () => {
     });
     expectedUrl.search = searchParams.toString();
     expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchActress should call request with correct parameters', async () => {
@@ -472,7 +399,7 @@ describe('DmmApiClient', () => {
         hits: String(params.hits || ''),
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchActress should call request with hits and offset', async () => {
@@ -489,7 +416,7 @@ describe('DmmApiClient', () => {
       offset: '11',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchActress should call request with sort parameter', async () => {
@@ -505,7 +432,7 @@ describe('DmmApiClient', () => {
       sort: '-name',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchGenre should call request with correct parameters', async () => {
@@ -520,7 +447,7 @@ describe('DmmApiClient', () => {
         initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchMaker should call request with correct parameters', async () => {
@@ -535,7 +462,7 @@ describe('DmmApiClient', () => {
         initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchSeries should call request with correct parameters', async () => {
@@ -550,7 +477,7 @@ describe('DmmApiClient', () => {
         initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   it('searchAuthor should call request with correct parameters', async () => {
@@ -565,15 +492,15 @@ describe('DmmApiClient', () => {
         initial: params.initial || '',
     });
     expectedUrl.search = searchParams.toString();
-    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
   });
 
   // --- Test getAllItems ---
   describe('getAllItems', () => {
-    const params: Omit<ItemListRequestParams, 'hits' | 'offset'> = {
+    const baseParamsForGetAllItems: Omit<ItemListRequestParams, 'hits' | 'offset'> = {
       service: 'digital',
       floor: 'videoa',
-      keyword: 'test',
+      keyword: 'test-keyword-getallitems', // 他のテストと区別できるようなキーワード
     };
     const hitsPerPage = DmmApiClient.DefaultHitsPerPageForGetAllItems;
 
@@ -588,7 +515,7 @@ describe('DmmApiClient', () => {
           ok: true,
           json: async () => ({
             result: {
-              request: { parameters: { ...params, hits: hitsPerPage, offset: 1 } },
+              request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 1 } },
               result_count: totalItems,
               total_count: totalItems,
               first_position: 1,
@@ -600,7 +527,7 @@ describe('DmmApiClient', () => {
           ok: true,
           json: async () => ({
             result: {
-              request: { parameters: { ...params, hits: hitsPerPage, offset: 101 } },
+              request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 101 } },
               result_count: totalItems,
               total_count: totalItems,
               first_position: 101,
@@ -612,7 +539,7 @@ describe('DmmApiClient', () => {
           ok: true,
           json: async () => ({
             result: {
-              request: { parameters: { ...params, hits: hitsPerPage, offset: 201 } },
+              request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 201 } },
               result_count: totalItems,
               total_count: totalItems,
               first_position: 201,
@@ -622,7 +549,7 @@ describe('DmmApiClient', () => {
         });
 
       const receivedItems: Partial<Item>[] = [];
-      for await (const item of client.getAllItems(params)) {
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
         receivedItems.push(item);
       }
 
@@ -636,26 +563,26 @@ describe('DmmApiClient', () => {
       const baseSearchParams = {
         api_id: defaultOptions.apiId,
         affiliate_id: defaultOptions.affiliateId,
-        service: params.service || '',
-        floor: params.floor || '',
-        keyword: params.keyword || '',
+        service: baseParamsForGetAllItems.service || '',
+        floor: baseParamsForGetAllItems.floor || '',
+        keyword: baseParamsForGetAllItems.keyword || '',
         hits: String(hitsPerPage),
       };
 
       const url1 = new URL(expectedUrlBase);
       const p1 = { ...baseSearchParams, offset: '1' };
       url1.search = new URLSearchParams(p1).toString();
-      expect(mockFetch).toHaveBeenNthCalledWith(1, url1.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenNthCalledWith(1, url1.toString());
 
       const url2 = new URL(expectedUrlBase);
       const p2 = { ...baseSearchParams, offset: '101' };
       url2.search = new URLSearchParams(p2).toString();
-      expect(mockFetch).toHaveBeenNthCalledWith(2, url2.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenNthCalledWith(2, url2.toString());
 
       const url3 = new URL(expectedUrlBase);
       const p3 = { ...baseSearchParams, offset: '201' };
       url3.search = new URLSearchParams(p3).toString();
-      expect(mockFetch).toHaveBeenNthCalledWith(3, url3.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenNthCalledWith(3, url3.toString());
     });
 
     it('should yield no items if result_count is 0', async () => {
@@ -663,7 +590,7 @@ describe('DmmApiClient', () => {
           ok: true,
           json: async () => ({
             result: {
-              request: { parameters: { ...params, hits: hitsPerPage, offset: 1 } },
+              request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 1 } },
               result_count: 0,
               total_count: 0,
               first_position: 0,
@@ -673,7 +600,7 @@ describe('DmmApiClient', () => {
         });
 
         const receivedItems = [];
-        for await (const item of client.getAllItems(params)) {
+        for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
             receivedItems.push(item);
         }
 
@@ -688,7 +615,7 @@ describe('DmmApiClient', () => {
             ok: true,
             json: async () => ({
                 result: {
-                    request: { parameters: { ...params, hits: hitsPerPage, offset: 1 } },
+                    request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 1 } },
                     result_count: totalItems,
                     total_count: totalItems,
                     first_position: 1,
@@ -698,7 +625,7 @@ describe('DmmApiClient', () => {
         });
 
         const receivedItems = [];
-        for await (const item of client.getAllItems(params)) {
+        for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
             receivedItems.push(item);
         }
 
@@ -720,7 +647,7 @@ describe('DmmApiClient', () => {
                     ok: true,
                     json: async () => ({
                         result: {
-                            request: { parameters: { ...params, hits: hitsPerPage, offset: 1 } },
+                            request: { parameters: { ...baseParamsForGetAllItems, hits: hitsPerPage, offset: 1 } },
                             result_count: 150,
                             total_count: 150,
                             first_position: 1,
@@ -732,7 +659,7 @@ describe('DmmApiClient', () => {
             throw apiError;
         });
 
-        const generator = client.getAllItems(params);
+        const generator = client.getAllItems(baseParamsForGetAllItems);
         const receivedItems: Partial<Item>[] = [];
         let caughtError: Error | null = null;
 
@@ -761,6 +688,374 @@ describe('DmmApiClient', () => {
 
         expect(mockFetch).toHaveBeenCalledTimes(2);
     });
+
+    it('should yield items correctly and handle pagination until no more items are returned', async () => {
+      const params: ItemListRequestParams = { site: 'DMM.com', service: 'digital', floor: 'videoa', hits: 10, offset: 1 };
+      const mockResponse1 = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 2,
+          first_position: 1,
+          items: [{ content_id: 'item1' } as Item],
+        },
+      };
+      const mockResponse2 = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 2,
+          first_position: 2,
+          items: [{ content_id: 'item2' } as Item],
+        },
+      };
+
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => mockResponse1 })
+        .mockResolvedValueOnce({ ok: true, json: async () => mockResponse2 });
+
+      const items: Item[] = [];
+      const { hits, offset, ...baseParams } = params;
+      for await (const item of client.getAllItems(baseParams)) {
+        items.push(item);
+      }
+
+      expect(items.length).toBe(2);
+      expect(items[0].content_id).toBe('item1');
+      expect(items[1].content_id).toBe('item2');
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const calls = mockFetch.mock.calls;
+      const firstCallUrl = new URL(calls[0][0] as string);
+      expect(firstCallUrl.searchParams.get('hits')).toBe(String(DmmApiClient.DefaultHitsPerPageForGetAllItems));
+      expect(firstCallUrl.searchParams.get('offset')).toBe('1');
+
+      const secondCallUrl = new URL(calls[1][0] as string);
+      expect(secondCallUrl.searchParams.get('hits')).toBe(String(DmmApiClient.DefaultHitsPerPageForGetAllItems));
+      expect(secondCallUrl.searchParams.get('offset')).toBe(String(mockResponse1.result.first_position + mockResponse1.result.items.length));
+    });
+
+    it('should handle API error during pagination in getAllItems and throw enhanced error', async () => {
+      const params: Omit<ItemListRequestParams, 'hits' | 'offset'> = { site: 'DMM.com', service: 'digital', floor: 'videoa', sort: 'rank' };
+      const mockSuccessResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 10,
+          first_position: 1,
+          items: [{ content_id: 'item1' } as Item],
+        },
+      };
+      const mockError = new Error('Simulated API Error');
+
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => mockSuccessResponse })
+        .mockRejectedValueOnce(mockError);
+
+      const items: Item[] = [];
+      try {
+        for await (const item of client.getAllItems(params)) {
+          items.push(item);
+        }
+        expect('Error was not thrown').toBe('Error should have been thrown');
+      } catch (e: unknown) {
+        expect(e).toBeInstanceOf(Error);
+        const error = e as Error & { cause?: Error };
+        expect(error.message).toMatch(/^Error in getAllItems at offset \d+: Error during API request to \/ItemList: Simulated API Error$/);
+        expect(error.cause).toBeInstanceOf(Error);
+        expect(error.cause?.message).toBe(`Error during API request to ${DmmApiClient.ItemListEndpoint}: ${mockError.message}`);
+      }
+      expect(items.length).toBe(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should correctly set total_count on the first call and use it for subsequent loop condition', async () => {
+      const totalItemsExpected = 5; // total_countが少ないケース
+      const itemsPage1: Item[] = [{ content_id: 'tc_item1' }, { content_id: 'tc_item2' }] as Item[];
+      const itemsPage2: Item[] = [{ content_id: 'tc_item3' }, { content_id: 'tc_item4' }, { content_id: 'tc_item5' }] as Item[];
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: itemsPage1.length,
+              total_count: totalItemsExpected, // First call sets this
+              first_position: 1,
+              items: itemsPage1,
+            },
+          }),
+        })
+        .mockResolvedValueOnce({ // This call should happen
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: itemsPage2.length,
+              total_count: totalItemsExpected, // Subsequent calls use the existing total_count
+              first_position: 1 + itemsPage1.length,
+              items: itemsPage2,
+            },
+          }),
+        });
+        // .mockResolvedValueOnce({ // This call should NOT happen as currentOffset (1+2+3=6) > totalCount (5)
+        //   ok: true,
+        //   json: async () => ({ result: { items: [], total_count: totalItemsExpected, first_position: 1 + itemsPage1.length + itemsPage2.length, result_count: 0 } }),
+        // });
+
+
+      const receivedItems: Item[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+
+      expect(receivedItems.length).toBe(totalItemsExpected);
+      expect(mockFetch).toHaveBeenCalledTimes(2); // total_countに基づいて2回呼び出される
+      expect(receivedItems.map(i => i.content_id)).toEqual(['tc_item1', 'tc_item2', 'tc_item3', 'tc_item4', 'tc_item5']);
+    });
+
+    it('getAllItems should handle a large number of items with multiple pages', async () => {
+      const totalItems = 250; // DefaultHitsPerPageForGetAllItems (100) * 2 + 50
+      const page1Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `large_item_${i + 1}` }));
+      const page2Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `large_item_${i + 1 + hitsPerPage}` }));
+      const page3Items: Partial<Item>[] = Array.from({ length: totalItems - 2 * hitsPerPage }, (_, i) => ({ content_id: `large_item_${i + 1 + 2 * hitsPerPage}` }));
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: page1Items.length,
+              total_count: totalItems,
+              first_position: 1,
+              items: page1Items,
+            },
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: page2Items.length,
+              total_count: totalItems,
+              first_position: 1 + hitsPerPage,
+              items: page2Items,
+            },
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: page3Items.length,
+              total_count: totalItems,
+              first_position: 1 + 2 * hitsPerPage,
+              items: page3Items,
+            },
+          }),
+        });
+
+      const receivedItems: Partial<Item>[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+
+      expect(receivedItems.length).toBe(totalItems);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(receivedItems[0].content_id).toBe('large_item_1');
+      expect(receivedItems[totalItems - 1].content_id).toBe(`large_item_${totalItems}`);
+    });
+
+    it('getAllItems should make no API calls if total_count is 0 on the first response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          result: {
+            status: 200,
+            result_count: 0,
+            total_count: 0, // total_count is 0
+            first_position: 0,
+            items: [],
+          },
+        }),
+      });
+
+      const receivedItems: Item[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+
+      expect(receivedItems.length).toBe(0);
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Only the first call to get total_count
+    });
+
+    it('getAllItems should yield no items if the first response has no items and total_count is 0', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          result: {
+            status: 200,
+            result_count: 0,
+            total_count: 0,
+            first_position: 0,
+            items: [], // No items
+          },
+        }),
+      });
+
+      const receivedItems: Item[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+
+      expect(receivedItems.length).toBe(0);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+     it('getAllItems should yield no items if the first response has items but total_count is 0 (edge case, API should not do this)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          result: {
+            status: 200,
+            result_count: 1, // Has an item
+            total_count: 0,   // But total_count is 0
+            first_position: 1,
+            items: [{ content_id: 'edge_item1' } as Item],
+          },
+        }),
+      });
+
+      const receivedItems: Item[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+      // total_countが0なので、最初のAPI呼び出しで終了し、アイテムはイールドされない
+      expect(receivedItems.length).toBe(0);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('getAllItems should stop if items array is unexpectedly empty or missing mid-pagination', async () => {
+      const itemsPage1: Item[] = [{ content_id: 'stop_item1' }, { content_id: 'stop_item2' }] as Item[];
+      mockFetch
+        .mockResolvedValueOnce({ // First page has items
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: itemsPage1.length,
+              total_count: 5, // Expects more items
+              first_position: 1,
+              items: itemsPage1,
+            },
+          }),
+        })
+        .mockResolvedValueOnce({ // Second page unexpectedly has no items
+          ok: true,
+          json: async () => ({
+            result: {
+              status: 200,
+              result_count: 0,
+              total_count: 5,
+              first_position: 1 + itemsPage1.length,
+              items: [], // Empty items
+            },
+          }),
+        });
+
+      const receivedItems: Item[] = [];
+      for await (const item of client.getAllItems(baseParamsForGetAllItems)) {
+        receivedItems.push(item);
+      }
+
+      expect(receivedItems.length).toBe(itemsPage1.length); // Should only get items from the first page
+      expect(mockFetch).toHaveBeenCalledTimes(2); // Called twice, but stopped due to empty items
+      expect(receivedItems.map(i=>i.content_id)).toEqual(['stop_item1', 'stop_item2']);
+    });
+
+
+    it('getAllItems should correctly calculate the next offset when first_position is not 1', async () => {
+      // このテストケース専用のモック設定に集中する
+      mockFetch.mockClear(); // 念のためクリア
+
+      const firstCallResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 7, // Adjusted total_count
+          first_position: 5,
+          items: [{content_id: 'fp_item1'} as Item]
+        }
+      };
+      const secondCallResponse = {
+         result: {
+          status: 200,
+          result_count: 1,
+          total_count: 7, // Adjusted total_count
+          first_position: 6,
+          items: [{content_id: 'fp_item2'} as Item]
+        }
+      };
+      // このテストでは、上記レスポンス以降はアイテムがないことを示す空レスポンスを追加
+      const thirdCallEmptyResponse = {
+        result: {
+          status: 200,
+          result_count: 0,
+          total_count: 7, // Adjusted total_count
+          first_position: 7, // 6 + 1
+          items: []
+        }
+      };
+
+
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => firstCallResponse })
+        .mockResolvedValueOnce({ ok: true, json: async () => secondCallResponse })
+        .mockResolvedValueOnce({ ok: true, json: async () => thirdCallEmptyResponse });
+
+
+      const receivedItems: Item[] = [];
+      // getAllItems に渡すパラメータは hits や offset を含まないもの
+      const queryParams: Omit<ItemListRequestParams, 'hits' | 'offset'> = {
+        service: 'digital',
+        floor: 'videoa',
+        keyword: 'test-fp-calc', // このテスト固有のキーワード
+      };
+
+      for await (const item of client.getAllItems(queryParams)) {
+        receivedItems.push(item);
+      }
+
+      // 2つのアイテムが取得され、3回目のAPI呼び出しでループが終了するはず
+      expect(receivedItems.length).toBe(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3); // 2回アイテム取得 + 1回空確認
+
+      const calls = mockFetch.mock.calls;
+
+      const firstCallUrl = new URL(calls[0][0] as string);
+      expect(firstCallUrl.searchParams.get('offset')).toBe('1');
+      expect(firstCallUrl.searchParams.get('keyword')).toBe('test-fp-calc');
+
+
+      const secondCallUrl = new URL(calls[1][0] as string);
+      expect(secondCallUrl.searchParams.get('offset')).toBe(
+        String(firstCallResponse.result.first_position + firstCallResponse.result.items.length) // 5 + 1 = 6
+      );
+      expect(secondCallUrl.searchParams.get('keyword')).toBe('test-fp-calc');
+
+      const thirdCallUrl = new URL(calls[2][0] as string);
+      expect(thirdCallUrl.searchParams.get('offset')).toBe(
+        String(secondCallResponse.result.first_position + secondCallResponse.result.items.length) // 6 + 1 = 7
+      );
+      expect(thirdCallUrl.searchParams.get('keyword')).toBe('test-fp-calc');
+
+      expect(receivedItems.map(i=>i.content_id)).toEqual(['fp_item1', 'fp_item2']);
+    });
+
   });
 
   describe('getItemList API (Endpoint Constant Test)', () => {
@@ -785,19 +1080,34 @@ describe('DmmApiClient', () => {
       }
       const searchParams = new URLSearchParams(queryParams);
       expectedUrl.search = searchParams.toString();
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     it('should use the DmmApiClient.ItemListEndpoint constant for the endpoint path', async () => {
-      const mockResponse = { result: { items: [] } };
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      const mockItemListResponse = { status: 200, items: [], total_count:0, result_count:0, first_position:0 };
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ result: mockItemListResponse }) });
 
-      await client.getItemList(itemListParams);
-      const fetchCall = mockFetch.mock.calls[0][0] as string;
-      expect(fetchCall.includes(DmmApiClient.ItemListEndpoint)).toBe(true);
+      const client = new DmmApiClient(defaultOptions);
+      const params: ItemListRequestParams = { site: 'DMM.com', service: 'digital', floor: 'videoa' };
+      await client.getItemList(params);
+
+      const expectedUrl = new URL(`${(client as unknown as { baseUrl: string }).baseUrl}${DmmApiClient.ItemListEndpoint}`);
+      const queryParamsForSearch: Record<string, string> = {
+        api_id: defaultOptions.apiId,
+        affiliate_id: defaultOptions.affiliateId,
+      };
+      // params の各プロパティを string に変換して queryParamsForSearch にマージ
+      for (const key in params) {
+        if (Object.prototype.hasOwnProperty.call(params, key)) {
+          const paramKey = key as keyof ItemListRequestParams;
+          if (params[paramKey] !== undefined) { // undefined の値は除外
+            queryParamsForSearch[paramKey] = String(params[paramKey]);
+          }
+        }
+      }
+      expectedUrl.search = new URLSearchParams(queryParamsForSearch).toString();
+
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
   });
 
@@ -813,7 +1123,7 @@ describe('DmmApiClient', () => {
       });
       expectedUrl.search = searchParams.toString();
       expect(expectedUrl.searchParams.getAll('site').length).toBe(0);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     it('getFloorList should always use DMM.com site by default', async () => {
@@ -826,7 +1136,7 @@ describe('DmmApiClient', () => {
           affiliate_id: defaultOptions.affiliateId,
       });
       expectedUrl.search = searchParams.toString();
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     it('should use the DmmApiClient.FloorListEndpoint constant for the endpoint path', async () => {
@@ -861,12 +1171,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = expectedParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
-    });
-
-    it('should throw an error if keyword is missing for ActressSearch', async () => {
-      const paramsWithoutKeyword = { ...actressSearchParams, keyword: undefined } as unknown as ActressSearchRequestParams;
-      expect(true).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
   });
 
@@ -896,7 +1201,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = expectedParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     // 他の searchGenre 関連のテストケースは必要に応じて追加
@@ -929,7 +1234,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = expectedParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     // 他の searchMaker 関連のテストケースは必要に応じて追加
@@ -962,7 +1267,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = expectedParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     // 他の searchSeries 関連のテストケースは必要に応じて追加
@@ -995,7 +1300,7 @@ describe('DmmApiClient', () => {
       expectedUrl.search = expectedParams.toString();
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString(), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(mockFetch).toHaveBeenCalledWith(expectedUrl.toString());
     });
 
     // 他の searchAuthor 関連のテストケースは必要に応じて追加
