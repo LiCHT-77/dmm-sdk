@@ -36,13 +36,9 @@ describe('DmmApiClient', () => {
     apiId: 'test-api-id',
     affiliateId: 'test-affiliate-id',
   };
-  const clientDefaultMaxRetries = DmmApiClient.DefaultMaxRetries;
-  const clientDefaultRetryDelay = DmmApiClient.DefaultRetryDelay;
   const clientDefaultTimeout = DmmApiClient.DefaultTimeout;
 
-  const testRetryDelay = 50;
   const testTimeout = 500;
-  const testMaxRetries = 3;
 
   let client: DmmApiClient;
 
@@ -52,8 +48,6 @@ describe('DmmApiClient', () => {
         apiId: defaultOptions.apiId,
         affiliateId: defaultOptions.affiliateId,
         timeout: testTimeout,
-        retryDelay: testRetryDelay,
-        maxRetries: testMaxRetries,
     });
   });
 
@@ -216,21 +210,15 @@ describe('DmmApiClient', () => {
   it('should create an instance with default timeout and retries', () => {
      const defaultClient = new DmmApiClient(defaultOptions);
     expect((defaultClient as unknown as { timeout: number }).timeout).toBe(clientDefaultTimeout);
-    expect((defaultClient as unknown as { maxRetries: number }).maxRetries).toBe(clientDefaultMaxRetries);
-    expect((defaultClient as unknown as { retryDelay: number }).retryDelay).toBe(clientDefaultRetryDelay);
   });
 
   it('should create an instance with specified timeout, maxRetries, and retryDelay', () => {
     const customOptions: DmmApiClientOptions = {
       ...defaultOptions,
       timeout: 5000,
-      maxRetries: 5,
-      retryDelay: 500,
     };
     const customClient = new DmmApiClient(customOptions);
     expect((customClient as unknown as { timeout: number }).timeout).toBe(5000);
-    expect((customClient as unknown as { maxRetries: number }).maxRetries).toBe(5);
-    expect((customClient as unknown as { retryDelay: number }).retryDelay).toBe(500);
   });
 
   describe('request method (including timeout and retry logic)', () => {
@@ -311,103 +299,52 @@ describe('DmmApiClient', () => {
 
       await expect((client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params))
         .rejects
-        .toThrow(`API request to ${endpoint} failed with status ${errorStatus} after 0 attempts: ${errorResponse.result.message}`);
+        .toThrow(`API request to ${endpoint} failed with status ${errorStatus}: ${errorResponse.result.message}`);
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    it('should retry and throw an error if response is not ok and body is not json (retryable status)', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
-        const errorStatus = 500;
-        const errorText = 'Internal Server Error';
-        mockFetch.mockResolvedValue({
-            ok: false,
-            status: errorStatus,
-            statusText: 'Server Error',
-            json: async () => { throw new Error('Not JSON')},
-            text: async () => errorText,
-        });
+    it('should not retry on 5xx errors and throw an error immediately', async () => {
+      const endpoint = '/Test5xxError';
+      const testParams = { site: 'DMM.com' };
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: async () => ({ result: { message: 'Server Error' } }),
+      });
 
-        try {
-            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
-            throw new Error('Promise should have been rejected');
-        } catch (error: unknown) {
-            const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorText}`;
-            if (error instanceof Error) {
-                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
-            } else {
-                throw new Error('Caught error is not an instance of Error');
-            }
-        }
-
-        const expectedCalls = 1 + testMaxRetries;
-        expect(mockFetch).toHaveBeenCalledTimes(expectedCalls);
+      await expect(
+        (client as unknown as { request: (endpoint: string, params?: unknown) => Promise<unknown> }).request(endpoint, testParams)
+      ).rejects.toThrow('API request to /Test5xxError failed with status 500: Server Error');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    it('should retry on network error', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
-      const networkError = new TypeError('Failed to fetch');
-      mockFetch.mockRejectedValue(networkError);
+    it('should not retry on 429 errors and throw an error immediately', async () => {
+      const endpoint = '/Test429Error';
+      const testParams = { site: 'DMM.com' };
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        json: async () => ({ result: { message: 'Rate Limit Exceeded' } }),
+      });
 
-       try {
-           await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
-           throw new Error('Promise should have been rejected');
-       } catch (error: unknown) {
-           expect(error).toBeInstanceOf(Error);
-           if (error instanceof Error) {
-            expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${networkError.message}`);
-           }
-       }
-
-      const expectedNetworkErrorCalls = 1 + testMaxRetries;
-      expect(mockFetch).toHaveBeenCalledTimes(expectedNetworkErrorCalls);
+      await expect(
+        (client as unknown as { request: (endpoint: string, params?: unknown) => Promise<unknown> }).request(endpoint, testParams)
+      ).rejects.toThrow('API request to /Test429Error failed with status 429: Rate Limit Exceeded');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-     it('should retry on 429 Too Many Requests', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
-        const errorStatus = 429;
-        const errorResponse = { result: { message: 'Too Many Requests' } };
-        mockFetch.mockResolvedValue({
-            ok: false,
-            status: errorStatus,
-            statusText: 'Too Many Requests',
-            json: async () => errorResponse,
-        });
+    it('should not retry on network error (fetch throws) and throw an error immediately', async () => {
+      const endpoint = '/TestNetworkError';
+      const testParams = { site: 'DMM.com' };
+      const networkError = new TypeError('Network request failed');
+      mockFetch.mockRejectedValueOnce(networkError);
 
-        try {
-            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
-            throw new Error('Promise should have been rejected');
-        } catch (error: unknown) {
-             const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorResponse.result.message}`;
-             if (error instanceof Error) {
-                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
-             } else {
-                throw new Error('Caught error is not an instance of Error');
-             }
-        }
-
-        expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
-    });
-
-     it('should retry on 5xx Server Error', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
-        const errorStatus = 503;
-        const errorResponse = { result: { message: 'Service Unavailable' } };
-         mockFetch.mockResolvedValue({
-            ok: false,
-            status: errorStatus,
-            statusText: 'Service Unavailable',
-            json: async () => errorResponse,
-        });
-
-        try {
-            await (client as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params);
-            throw new Error('Promise should have been rejected');
-        } catch (error: unknown) {
-            const expectedOriginalMessage = `API request to ${endpoint} failed with status ${errorStatus} after ${testMaxRetries} attempts: ${errorResponse.result.message}`;
-            if (error instanceof Error) {
-                expect(error.message).toBe(`Error during API request to ${endpoint} after ${testMaxRetries} attempts: ${expectedOriginalMessage}`);
-            } else {
-                throw new Error('Caught error is not an instance of Error');
-            }
-        }
-
-        expect(mockFetch).toHaveBeenCalledTimes(1 + testMaxRetries);
+      await expect(
+          (client as unknown as { request: (endpoint: string, params?: unknown) => Promise<unknown> }).request(endpoint, testParams)
+      ).rejects.toThrow(`Error during API request to ${endpoint}: Network request failed`);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
      it('should timeout if fetch takes too long', { timeout: testTimeout + 1000 }, async () => {
@@ -459,8 +396,6 @@ describe('DmmApiClient', () => {
     it('should not retry if maxRetries is 0', async () => {
       const noRetryClient = new DmmApiClient({
         ...defaultOptions,
-        maxRetries: 0,
-        retryDelay: testRetryDelay,
         timeout: testTimeout,
       });
       const networkError = new TypeError('Failed to fetch');
@@ -468,7 +403,7 @@ describe('DmmApiClient', () => {
 
       await expect(
         (noRetryClient as unknown as { request: (endpoint: string, params: unknown) => Promise<unknown> }).request(endpoint, params)
-      ).rejects.toThrow(`Error during API request to ${endpoint} after 0 attempts: ${networkError.message}`);
+      ).rejects.toThrow(`Error during API request to ${endpoint}: ${networkError.message}`);
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
@@ -642,7 +577,7 @@ describe('DmmApiClient', () => {
     };
     const hitsPerPage = DmmApiClient.DefaultHitsPerPageForGetAllItems;
 
-    it('should yield all items from multiple pages', { timeout: testRetryDelay * (2 ** (testMaxRetries + 1) -1) + 1000 }, async () => {
+    it('should yield all items from multiple pages', { timeout: 1000 }, async () => {
       const totalItems = 250;
       const page1Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `item_${i + 1}` }));
       const page2Items: Partial<Item>[] = Array.from({ length: hitsPerPage }, (_, i) => ({ content_id: `item_${i + 101}` }));
@@ -815,7 +750,7 @@ describe('DmmApiClient', () => {
         expect(caughtError).toBeInstanceOf(Error);
 
         const expectedOffsetForError = 1 + hitsPerPage;
-        const expectedOriginalErrorMessage = `Error during API request to /ItemList after ${testMaxRetries} attempts: ${apiError.message}`;
+        const expectedOriginalErrorMessage = `Error during API request to /ItemList: ${apiError.message}`;
         if (caughtError) {
             expect(caughtError.message).toBe(`Error in getAllItems at offset ${expectedOffsetForError}: ${expectedOriginalErrorMessage}`);
             expect(caughtError.cause).toBeInstanceOf(Error);
@@ -824,7 +759,7 @@ describe('DmmApiClient', () => {
             }
         }
 
-        expect(mockFetch).toHaveBeenCalledTimes(1 + (1 + testMaxRetries));
+        expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 

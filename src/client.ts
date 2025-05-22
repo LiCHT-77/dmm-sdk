@@ -26,10 +26,6 @@ export interface DmmApiClientOptions {
   affiliateId: string;
   /** Request timeout in milliseconds (default: 10000) */
   timeout?: number;
-  /** Maximum number of retries (default: 3) */
-  maxRetries?: number;
-  /** Initial retry delay in milliseconds (default: 1000) */
-  retryDelay?: number;
   /** Base URL for the API (optional) */
   baseUrl?: string;
 }
@@ -48,13 +44,9 @@ export class DmmApiClient {
   public static readonly AuthorSearchEndpoint = '/AuthorSearch';
   public static readonly DefaultHitsPerPageForGetAllItems = 100;
   public static readonly DefaultTimeout = 10000;
-  public static readonly DefaultMaxRetries = 3;
-  public static readonly DefaultRetryDelay = 1000;
   private readonly apiId: string;
   private readonly affiliateId: string;
   private readonly timeout: number;
-  private readonly maxRetries: number;
-  private readonly retryDelay: number;
 
   /**
    * Creates an instance of DmmApiClient.
@@ -68,8 +60,6 @@ export class DmmApiClient {
     this.apiId = options.apiId;
     this.affiliateId = options.affiliateId;
     this.timeout = options.timeout ?? DmmApiClient.DefaultTimeout;
-    this.maxRetries = options.maxRetries ?? DmmApiClient.DefaultMaxRetries;
-    this.retryDelay = options.retryDelay ?? DmmApiClient.DefaultRetryDelay;
 
     if (options.baseUrl !== undefined) {
       if (typeof options.baseUrl !== 'string' || options.baseUrl.trim() === '') {
@@ -117,76 +107,53 @@ export class DmmApiClient {
     const searchParams = new URLSearchParams(queryParams);
     url.search = searchParams.toString();
 
-    let attempts = 0;
-    while (attempts <= this.maxRetries) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      try {
-        const response = await fetch(url.toString(), { signal: controller.signal });
-        clearTimeout(timeoutId);
+    try {
+      const response = await fetch(url.toString(), { signal: controller.signal });
+      clearTimeout(timeoutId);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (!data || typeof data !== 'object' || !('result' in data)) {
-            throw new Error('Invalid API response format: "result" field is missing.');
-          }
-          return data.result as T;
+      if (response.ok) {
+        const data = await response.json();
+        if (!data || typeof data !== 'object' || !('result' in data)) {
+          throw new Error('Invalid API response format: "result" field is missing.');
         }
-
-        // Check if the error is retryable (429 Too Many Requests or 5xx Server Error)
-        if ((response.status === 429 || response.status >= 500) && attempts < this.maxRetries) {
-          attempts++;
-          const delay = this.retryDelay * 2 ** (attempts - 1); // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-
-        // Non-retryable error or max retries exceeded
-        const errorBody = await response.json().catch(e => response.text());
-        const errorMessage = errorBody?.result?.message || (typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)) || response.statusText;
-        throw new Error(`API request to ${endpoint} failed with status ${response.status} after ${attempts} attempts: ${errorMessage}`);
-
-      } catch (error: unknown) {
-        clearTimeout(timeoutId);
-
-        let isTimeoutError = false;
-
-        if (error && typeof error === 'object') {
-          const err = error as { name?: string; message?: string };
-          if (err.name === 'AbortError') {
-            isTimeoutError = true;
-          } else if (
-            err.message &&
-            (err.message.toLowerCase().includes('aborted') ||
-              err.message.includes('The operation was aborted'))
-          ) {
-            isTimeoutError = true;
-          }
-        }
-
-        if (isTimeoutError) {
-          throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
-        }
-
-        // Only retry network errors (e.g., TypeError if fetch itself fails)
-        const shouldRetryNetworkError = (error instanceof TypeError);
-
-        if (shouldRetryNetworkError && attempts < this.maxRetries) {
-            attempts++;
-            const delay = this.retryDelay * 2 ** (attempts - 1);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            continue;
-        }
-
-        // Non-retryable error or max retries exceeded
-        // HTTP error responses (including JSON parse failures) are handled above
-        const originalErrorMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(`Error during API request to ${endpoint} after ${attempts} attempts: ${originalErrorMessage}`);
+        return data.result as T;
       }
+
+      // Non-retryable error or max retries exceeded
+      const errorBody = await response.json().catch(e => response.text());
+      const errorMessage = errorBody?.result?.message || (typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)) || response.statusText;
+      throw new Error(`API request to ${endpoint} failed with status ${response.status}: ${errorMessage}`);
+
+    } catch (error: unknown) {
+      clearTimeout(timeoutId);
+
+      let isTimeoutError = false;
+
+      if (error && typeof error === 'object') {
+        const err = error as { name?: string; message?: string };
+        if (err.name === 'AbortError') {
+          isTimeoutError = true;
+        } else if (
+          err.message &&
+          (err.message.toLowerCase().includes('aborted') ||
+            err.message.includes('The operation was aborted'))
+        ) {
+          isTimeoutError = true;
+        }
+      }
+
+      if (isTimeoutError) {
+        throw new Error(`API request to ${endpoint} timed out after ${this.timeout}ms`);
+      }
+
+      // Non-retryable error or max retries exceeded
+      // HTTP error responses (including JSON parse failures) are handled above
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Error during API request to ${endpoint}: ${originalErrorMessage}`);
     }
-    // This line should normally not be reached, but throw an error for type checking.
-    throw new Error(`Reached end of request function unexpectedly after ${this.maxRetries + 1} attempts for endpoint ${endpoint}.`);
   }
 
   /**
@@ -293,7 +260,8 @@ export class DmmApiClient {
         }
 
       } catch (error) {
-        const enhancedError = new Error(`Error in getAllItems at offset ${currentOffset}: ${error instanceof Error ? error.message : String(error)}`);
+        const originalErrorMessage = error instanceof Error ? error.message : String(error);
+        const enhancedError = new Error(`Error in getAllItems at offset ${currentOffset}: ${originalErrorMessage}`);
         if (error instanceof Error && error.stack) {
             enhancedError.stack = error.stack;
         }
