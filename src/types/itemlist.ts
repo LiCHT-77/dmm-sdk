@@ -164,7 +164,7 @@ export interface Item {
     /** 出演者情報 */
     actor?: { id: number; name: string }[];
     /** 女優情報 */
-    actress?: { id: number; name: string }[];
+    actress?: { id: number; name: string; ruby: string }[];
     /** 監督情報 */
     director?: { id: number; name: string }[];
     /** 作者情報 */

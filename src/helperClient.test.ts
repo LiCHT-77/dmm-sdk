@@ -81,7 +81,7 @@ describe('DmmApiHelperClient', () => {
       sampleImageURL: { sample_s: { image: ['s1.jpg'] } },
       iteminfo: {
         maker: [{ id: 1, name: 'Test Maker' }],
-        actress: [{ id: 1, name: 'Test Actress' }],
+        actress: [{ id: 1, name: 'Test Actress', ruby: 'テストアクトレス' }],
         director: [{ id: 1, name: 'Test Director' }],
         series: [{ id: 1, name: 'Test Series' }],
         label: [{ id: 1, name: 'Test Label' }],
